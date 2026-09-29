@@ -42,7 +42,7 @@ export default function ManageTripModal({ trip, onClose, refetchTrips }) {
 
         <div className="flex-1 overflow-y-auto p-5 bg-white">
           {activeTab === 'general' && <GeneralTab trip={trip} onClose={onClose} refetchTrips={refetchTrips} />}
-          {activeTab === 'logistics' && <LogisticsTab trip={trip} onClose={onClose} />}
+          {activeTab === 'logistics' && <LogisticsTab trip={trip} onClose={onClose} refetchTrips={refetchTrips} />}
           {activeTab === 'sharing' && <SharingTab trip={trip} />}
         </div>
       </div>
@@ -143,7 +143,7 @@ function GeneralTab({ trip, onClose, refetchTrips }) {
   );
 }
 
-function LogisticsTab({ trip, onClose }) {
+function LogisticsTab({ trip, onClose, refetchTrips }) {
   const { fetchTripDetails, updateTrip } = useTrips();
   const [data, setData] = useState({ participants: [], transports: [], accommodations: [], schedule: [] });
   const [loading, setLoading] = useState(true);
@@ -183,6 +183,7 @@ function LogisticsTab({ trip, onClose }) {
     if (!res.success) {
       alert('Błąd zapisu logistyki: ' + res.error);
     } else {
+      if (refetchTrips) refetchTrips();
       if (onClose) onClose();
     }
     setSaving(false);

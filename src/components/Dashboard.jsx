@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Loader2, LogOut, Compass, Plus } from 'lucide-react';
+import { Loader2, LogOut, Compass, Plus, Map, Wallet, CheckSquare } from 'lucide-react';
 import { useTrips } from '../hooks/useTrips';
 import TripCard from './TripCard';
 import { useStore } from '../store/useStore';
 import CreateTripModal from './CreateTripModal';
+import packageJson from '../../package.json';
 
 export default function Dashboard() {
   const { trips, loading, error, createTrip, refetchTrips } = useTrips();
@@ -13,11 +14,27 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
       <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-2 text-blue-600">
             <Compass size={28} />
-            <h1 className="text-xl font-bold text-slate-800 tracking-tight">Traveler</h1>
+            <div className="flex flex-col">
+              <h1 className="text-xl font-bold text-slate-800 tracking-tight leading-none">Traveler</h1>
+              <span className="text-[10px] font-semibold text-slate-400 tracking-wider">v{packageJson.version}</span>
+            </div>
           </div>
+
+          <nav className="hidden md:flex items-center space-x-1">
+            <button className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg flex items-center">
+              <Map size={16} className="mr-1.5" /> Moje Wyjazdy
+            </button>
+            <button className="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-lg flex items-center transition-colors" title="Wkrótce!">
+              <Wallet size={16} className="mr-1.5" /> Rozliczenia
+            </button>
+            <button className="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-lg flex items-center transition-colors" title="Wkrótce!">
+              <CheckSquare size={16} className="mr-1.5" /> Ekwipunek
+            </button>
+          </nav>
+
           <div className="flex items-center space-x-4">
             <span className="text-sm text-slate-500 hidden sm:inline-block">
               {user?.email}
@@ -33,13 +50,13 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="max-w-5xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Twoje Wyjazdy</h2>
-            <p className="text-slate-500 mt-2">Przeglądaj zaplanowane podróże i logistykę.</p>
+            <p className="text-slate-500 mt-2">Przeglądaj zaplanowane podróże.</p>
           </div>
-          <button 
+          <button
             onClick={() => setIsModalOpen(true)}
             className="flex items-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl shadow-sm transition-colors"
           >
@@ -66,7 +83,7 @@ export default function Dashboard() {
             </div>
             <h3 className="text-lg font-medium text-slate-900">Brak zaplanowanych wyjazdów</h3>
             <p className="text-slate-500 mt-1 mb-6">Gdy dodasz nowe wyjazdy, pojawią się tutaj.</p>
-            <button 
+            <button
               onClick={() => setIsModalOpen(true)}
               className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl shadow-sm transition-colors font-medium"
             >
@@ -83,9 +100,9 @@ export default function Dashboard() {
       </main>
 
       {isModalOpen && (
-        <CreateTripModal 
-          onClose={() => setIsModalOpen(false)} 
-          createTrip={createTrip} 
+        <CreateTripModal
+          onClose={() => setIsModalOpen(false)}
+          createTrip={createTrip}
         />
       )}
     </div>

@@ -20,6 +20,19 @@ export default function TripCard({ trip, refetchTrips }) {
     setExpanded(!expanded);
   };
 
+  // Kiedy zapisujemy zmiany w modalu, odświeżamy nagłówki (przez Dashboard) 
+  // ORAZ szczegóły logistyki (jeśli karta jest aktualnie rozwinięta)
+  const handleTripUpdated = async () => {
+    if (refetchTrips) refetchTrips();
+
+    if (expanded) {
+      setLoading(true);
+      const data = await fetchTripDetails(trip.id);
+      setDetails(data);
+      setLoading(false);
+    }
+  };
+
   const formatDate = (dateStr) => {
     if (!dateStr) return '';
     return new Intl.DateTimeFormat('pl-PL', { day: 'numeric', month: 'short' }).format(new Date(dateStr));
@@ -35,7 +48,7 @@ export default function TripCard({ trip, refetchTrips }) {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden transition-all hover:shadow-md">
       {/* Widok Horyzontu (Zawsze widoczny w zależności od roli) */}
-      <div 
+      <div
         className={`p-5 flex items-center justify-between ${trip.role !== 'basic' && trip.role !== 'minimal' ? 'cursor-pointer' : ''}`}
         onClick={trip.role === 'admin' || trip.role === 'full' ? handleToggle : undefined}
       >
@@ -62,10 +75,10 @@ export default function TripCard({ trip, refetchTrips }) {
             <h3 className="text-xl font-bold text-slate-400 italic">Wyjazd ukryty</h3>
           )}
         </div>
-        
+
         <div className="flex items-center space-x-2">
           {trip.role === 'admin' && (
-            <button 
+            <button
               onClick={(e) => { e.stopPropagation(); setIsManageModalOpen(true); }}
               className="p-2 bg-slate-50 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded-full transition-colors"
               title="Zarządzaj wyjazdem"
@@ -90,7 +103,7 @@ export default function TripCard({ trip, refetchTrips }) {
       {/* Widok Logistyki (Dla uprawnionych, rozwija się jeśli są dane) */}
       {expanded && !loading && (
         <div className="border-t border-slate-100 bg-slate-50/50 p-5 space-y-6 animate-in slide-in-from-top-2 duration-200">
-          
+
           {/* Ekipa wyjazdowa */}
           {details.participants?.length > 0 && (
             <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
@@ -103,7 +116,7 @@ export default function TripCard({ trip, refetchTrips }) {
                   const isKid = member.type === 'dziecko';
                   return (
                     <div key={idx} className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-sm font-medium ${isKid ? 'bg-teal-50 text-teal-700' : 'bg-indigo-50 text-indigo-700'}`}>
-                      {isKid ? <Baby size={16} /> : <User size={16} />} 
+                      {isKid ? <Baby size={16} /> : <User size={16} />}
                       <span>{member.firstName} {member.lastName}</span>
                       {member.discounts && <span className="ml-1 opacity-75 text-xs">({member.discounts})</span>}
                     </div>
@@ -123,7 +136,7 @@ export default function TripCard({ trip, refetchTrips }) {
               {details.transports?.map((trans, idx) => (
                 <div key={idx} className="text-sm text-slate-600 mb-4 last:mb-0 border-b border-slate-50 pb-3 last:border-0 last:pb-0">
                   <div className="font-semibold text-slate-800 capitalize mb-1">{trans.type} z {trans.from} do {trans.to}</div>
-                  
+
                   {(trans.depDate || trans.arrDate) && (
                     <div className="grid grid-cols-2 gap-2 mt-2 bg-slate-50 p-2 rounded text-xs">
                       <div>
@@ -210,10 +223,10 @@ export default function TripCard({ trip, refetchTrips }) {
       )}
 
       {isManageModalOpen && (
-        <ManageTripModal 
-          trip={trip} 
-          onClose={() => setIsManageModalOpen(false)} 
-          refetchTrips={refetchTrips}
+        <ManageTripModal
+          trip={trip}
+          onClose={() => setIsManageModalOpen(false)}
+          refetchTrips={handleTripUpdated}
         />
       )}
     </div>
