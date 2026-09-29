@@ -1,16 +1,222 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, MapPin, Calendar, Plane, Hotel, Clock, Users, User, Baby, Settings, Crown, Car, FileText } from 'lucide-react';
+import { ChevronDown, ChevronUp, MapPin, Calendar, Plane, Hotel, Clock, Users, User, Baby, Settings, Crown, Car, FileText, Paperclip, Download, Trash2, Printer } from 'lucide-react';
 import { useTrips } from '../hooks/useTrips';
 import { useStore } from '../store/useStore';
 import ManageTripModal from './ManageTripModal';
+import { supabase } from '../lib/supabaseClient';
+import { PDFDocument } from 'pdf-lib';
 
 export default function TripCard({ trip, refetchTrips }) {
   const [expanded, setExpanded] = useState(false);
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [details, setDetails] = useState([]);
   const [loading, setLoading] = useState(false);
-  const { fetchTripDetails } = useTrips();
+  const [pdfGenerating, setPdfGenerating] = useState(false);
+  const { fetchTripDetails, updateTrip } = useTrips();
   const { mapSettings } = useStore();
+
+  const handleFileUpload = async (e, category, itemIdx) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const ext = file.name.split('.').pop();
+      const fileName = `${crypto.randomUUID()}_${file.name}`;
+      const filePath = `${trip.id}/${fileName}`;
+      const { error: uploadError } = await supabase.storage.from('travel_docs').upload(filePath, file);
+      if (uploadError) throw uploadError;
+
+      const newDetails = { ...details };
+      if (!newDetails[category][itemIdx].attachments) {
+        newDetails[category][itemIdx].attachments = [];
+      }
+      newDetails[category][itemIdx].attachments.push({ path: filePath, name: file.name });
+      setDetails(newDetails);
+      await updateTrip(trip.id, {}, newDetails);
+    } catch (err) {
+      alert("Błąd podczas wgrywania pliku: " + err.message);
+    }
+    e.target.value = '';
+  };
+
+  const handleDownloadAttachment = async (path, originalName) => {
+    try {
+      const { data, error } = await supabase.storage.from('travel_docs').download(path);
+      if (error) throw error;
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = originalName;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('Błąd pobierania: ' + err.message);
+    }
+  };
+
+  const handleDeleteAttachment = async (category, itemIdx, attIdx, path) => {
+    if (!window.confirm("Na pewno usunąć ten załącznik?")) return;
+    try {
+      const { error } = await supabase.storage.from('travel_docs').remove([path]);
+      if (error) throw error;
+      const newDetails = { ...details };
+      newDetails[category][itemIdx].attachments.splice(attIdx, 1);
+      setDetails(newDetails);
+      await updateTrip(trip.id, {}, newDetails);
+    } catch (err) {
+      alert('Błąd usuwania: ' + err.message);
+    }
+  };
+
+  const generateMasterPdf = async (e) => {
+    e.stopPropagation();
+    try {
+      setPdfGenerating(true);
+      const doc = await PDFDocument.create();
+      
+      const removePL = (str) => str ? String(str).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ł/g, "l").replace(/Ł/g, "L") : "";
+      
+      let page = doc.addPage();
+      let cursorY = 800;
+      
+      const checkPage = (needed) => {
+        if (cursorY - needed < 50) {
+          page = doc.addPage();
+          cursorY = 800;
+        }
+      };
+      
+      const drawText = (text, size) => {
+        if (!text) return;
+        checkPage(size + 10);
+        page.drawText(removePL(text), { x: 50, y: cursorY, size });
+        cursorY -= (size + 15);
+      };
+
+      let currentDetails = details;
+      if (!expanded) {
+        currentDetails = await fetchTripDetails(trip.id);
+      }
+
+      drawText(`Wyjazd: ${trip.title}`, 24);
+      drawText(`Miejsce: ${trip.destination || 'Brak'}`, 16);
+      drawText(`Termin: ${formatDate(trip.start_date)} - ${formatDate(trip.end_date)}`, 14);
+      cursorY -= 20;
+
+      if (currentDetails.participants?.length > 0) {
+        drawText("--- EKIPA WYJAZDOWA ---", 18);
+        currentDetails.participants.forEach(p => {
+          drawText(`${p.firstName} ${p.lastName} (${p.type})`, 12);
+        });
+        cursorY -= 20;
+      }
+
+      const processSection = async (title, items, renderItemText) => {
+        if (!items || items.length === 0) return;
+        drawText(`--- ${title} ---`, 18);
+        
+        for (const item of items) {
+          renderItemText(item);
+          
+          if (item.attachments && item.attachments.length > 0) {
+            drawText("Zalaczniki:", 10);
+            for (const att of item.attachments) {
+              drawText(`- ${att.name}`, 10);
+              if (att.name.toLowerCase().endsWith('.pdf')) {
+                try {
+                  const { data } = await supabase.storage.from('travel_docs').download(att.path);
+                  if (data) {
+                    const arrayBuffer = await data.arrayBuffer();
+                    const externalPdf = await PDFDocument.load(arrayBuffer);
+                    const copiedPages = await doc.copyPages(externalPdf, externalPdf.getPageIndices());
+                    copiedPages.forEach(p => doc.addPage(p));
+                    // Powrót do nowej pustej strony po doklejeniu załącznika, by tekst miał gdzie się pisać
+                    page = doc.addPage();
+                    cursorY = 800;
+                  }
+                } catch (err) {
+                  console.warn("Pominięto plik:", att.name, err);
+                }
+              }
+            }
+          }
+          cursorY -= 15;
+        }
+      };
+
+      await processSection("TRANSPORT", currentDetails.transports, (t) => {
+        drawText(`${t.type} z ${t.from} do ${t.to}`, 14);
+        if (t.depDate || t.arrDate) drawText(`Wylot: ${t.depDate} ${t.depTime} | Przylot: ${t.arrDate} ${t.arrTime}`, 12);
+      });
+
+      await processSection("ZAKWATEROWANIE", currentDetails.accommodations, (a) => {
+        drawText(`${a.name}`, 14);
+        drawText(`Adres: ${a.address}`, 12);
+        if (a.dateFrom || a.dateTo) drawText(`Od: ${a.dateFrom} Do: ${a.dateTo}`, 12);
+      });
+
+      await processSection("WYNAJEM AUTA", currentDetails.carRentals, (r) => {
+        drawText(`${r.company}`, 14);
+        drawText(`Miejsce: ${r.location}`, 12);
+        if (r.dateFrom || r.dateTo) drawText(`Od: ${r.dateFrom} Do: ${r.dateTo}`, 12);
+      });
+
+      await processSection("PARKINGI", currentDetails.parkings, (p) => {
+        drawText(`${p.location}`, 14);
+        if (p.dateFrom || p.dateTo) drawText(`Od: ${p.dateFrom} Do: ${p.dateTo}`, 12);
+      });
+
+      await processSection("HARMONOGRAM", currentDetails.schedule, (s) => {
+        drawText(`${s.day} ${s.time} - ${s.place}`, 14);
+        if (s.info) drawText(`Info: ${s.info}`, 12);
+      });
+
+      const pdfBytes = await doc.save();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Master_PDF_${trip.title}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('Błąd generowania PDF: ' + err.message);
+    } finally {
+      setPdfGenerating(false);
+    }
+  };
+
+  const renderAttachments = (category, item, itemIdx) => (
+    <div className="mt-3 border-t border-zinc-100 dark:border-zinc-700/50 pt-3">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Załączniki</span>
+        <label className="cursor-pointer flex items-center text-xs text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 transition-colors bg-teal-50 dark:bg-teal-900/30 px-2 py-1 rounded">
+          <Paperclip size={14} className="mr-1" /> Załącz plik
+          <input type="file" className="hidden" accept="application/pdf,image/*" onChange={(e) => handleFileUpload(e, category, itemIdx)} />
+        </label>
+      </div>
+      {item.attachments && item.attachments.length > 0 ? (
+        <ul className="space-y-2">
+          {item.attachments.map((att, attIdx) => (
+            <li key={attIdx} className="flex items-center justify-between bg-zinc-50 dark:bg-zinc-800/50 p-2 rounded text-xs">
+              <span className="truncate flex-1 mr-2 text-zinc-600 dark:text-zinc-300">{att.name}</span>
+              <div className="flex items-center space-x-2">
+                <button onClick={(e) => { e.stopPropagation(); handleDownloadAttachment(att.path, att.name); }} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200" title="Pobierz">
+                  <Download size={14} />
+                </button>
+                {trip.role === 'admin' && (
+                  <button onClick={(e) => { e.stopPropagation(); handleDeleteAttachment(category, itemIdx, attIdx, att.path); }} className="text-rose-400 hover:text-rose-600" title="Usuń">
+                    <Trash2 size={14} />
+                  </button>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div className="text-xs text-zinc-400 dark:text-zinc-500 italic">Brak załączników</div>
+      )}
+    </div>
+  );
 
   const handleToggle = async () => {
     if (!expanded) {
@@ -99,6 +305,18 @@ export default function TripCard({ trip, refetchTrips }) {
         </div>
 
         <div className="flex items-center space-x-2">
+          <button
+            onClick={generateMasterPdf}
+            disabled={pdfGenerating}
+            className="p-2 bg-zinc-50 dark:bg-zinc-700/50 hover:bg-teal-50 dark:hover:bg-teal-900/30 text-zinc-400 dark:text-zinc-500 hover:text-teal-600 dark:hover:text-teal-400 rounded-full transition-colors"
+            title="Generuj Master PDF (Offline)"
+          >
+            {pdfGenerating ? (
+              <div className="animate-spin rounded-full h-5 w-5 border-2 border-zinc-300 dark:border-zinc-600 border-t-teal-600 dark:border-t-teal-400"></div>
+            ) : (
+              <Printer size={20} />
+            )}
+          </button>
           {trip.role === 'admin' && (
             <button
               onClick={(e) => { e.stopPropagation(); setIsManageModalOpen(true); }}
@@ -192,6 +410,7 @@ export default function TripCard({ trip, refetchTrips }) {
                         ></iframe>
                       </div>
                     )}
+                    {renderAttachments('transports', trans, idx)}
                   </div>
                 ))}
               </div>
@@ -232,6 +451,7 @@ export default function TripCard({ trip, refetchTrips }) {
                         ></iframe>
                       </div>
                     )}
+                    {renderAttachments('accommodations', hotel, idx)}
                   </div>
                 ))}
               </div>
@@ -272,6 +492,7 @@ export default function TripCard({ trip, refetchTrips }) {
                         ></iframe>
                       </div>
                     )}
+                    {renderAttachments('carRentals', rental, idx)}
                   </div>
                 ))}
               </div>
@@ -308,6 +529,7 @@ export default function TripCard({ trip, refetchTrips }) {
                         ></iframe>
                       </div>
                     )}
+                    {renderAttachments('parkings', parking, idx)}
                   </div>
                 ))}
               </div>
@@ -324,6 +546,7 @@ export default function TripCard({ trip, refetchTrips }) {
                   <div key={idx} className="text-sm text-zinc-600 dark:text-zinc-400 mb-4 last:mb-0 border-b border-zinc-50 dark:border-zinc-700/50 pb-3 last:border-0 last:pb-0">
                     <div className="font-semibold text-zinc-800 dark:text-zinc-200">{ins.company} {ins.policyNumber && <span className="font-normal text-zinc-500">({ins.policyNumber})</span>}</div>
                     {ins.contactInfo && <div className="text-xs mt-2 text-zinc-500">{ins.contactInfo}</div>}
+                    {renderAttachments('insurances', ins, idx)}
                   </div>
                 ))}
               </div>
@@ -347,6 +570,7 @@ export default function TripCard({ trip, refetchTrips }) {
                     <div className="flex-1">
                       <div className="font-medium text-zinc-800 dark:text-zinc-200">{sched.place}</div>
                       {sched.info && <div className="text-zinc-500 dark:text-zinc-400 text-xs mt-0.5">{sched.info}</div>}
+                      {renderAttachments('schedule', sched, idx)}
                     </div>
                   </div>
                 ))}
