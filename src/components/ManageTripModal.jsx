@@ -1,46 +1,47 @@
 import { useState, useEffect } from 'react';
-import { X, Loader2, Save, Trash, UserPlus, Shield, User, Users, ShieldAlert, Plus, Plane, Hotel, Clock, Map } from 'lucide-react';
+import { X, Loader2, Save, Trash, UserPlus, Shield, User, Users, ShieldAlert, Plus, Plane, Hotel, Clock, Map, Car, FileText, MapPin } from 'lucide-react';
 import { useTrips } from '../hooks/useTrips';
 import { useAccess } from '../hooks/useAccess';
 import { useStore } from '../store/useStore';
 
 export default function ManageTripModal({ trip, onClose, refetchTrips }) {
   const [activeTab, setActiveTab] = useState('general'); // general, logistics, sharing
+  const { mapSettings } = useStore();
 
   return (
-    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
-        <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50">
+    <div className="fixed inset-0 bg-zinc-900/50 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden border border-transparent dark:border-zinc-800">
+        <div className="flex items-center justify-between p-5 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50">
           <div>
-            <h2 className="text-xl font-bold text-slate-800">Zarządzanie: {trip.title}</h2>
+            <h2 className="text-xl font-bold text-zinc-800 dark:text-white">Zarządzanie: {trip.title}</h2>
           </div>
-          <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-lg transition-colors">
+          <button onClick={onClose} className="p-1.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg transition-colors">
             <X size={20} />
           </button>
         </div>
 
-        <div className="flex border-b border-slate-100 px-5 bg-white">
+        <div className="flex border-b border-zinc-100 dark:border-zinc-800 px-5 bg-white dark:bg-zinc-900">
           <button
-            className={`py-3 px-4 font-medium text-sm border-b-2 transition-colors ${activeTab === 'general' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+            className={`py-3 px-4 font-medium text-sm border-b-2 transition-colors ${activeTab === 'general' ? 'border-teal-600 text-teal-600 dark:border-teal-400 dark:text-teal-400' : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
             onClick={() => setActiveTab('general')}
           >
             Ogólne
           </button>
           <button
-            className={`py-3 px-4 font-medium text-sm border-b-2 transition-colors ${activeTab === 'logistics' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+            className={`py-3 px-4 font-medium text-sm border-b-2 transition-colors ${activeTab === 'logistics' ? 'border-teal-600 text-teal-600 dark:border-teal-400 dark:text-teal-400' : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
             onClick={() => setActiveTab('logistics')}
           >
             Logistyka
           </button>
           <button
-            className={`py-3 px-4 font-medium text-sm border-b-2 transition-colors ${activeTab === 'sharing' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+            className={`py-3 px-4 font-medium text-sm border-b-2 transition-colors ${activeTab === 'sharing' ? 'border-teal-600 text-teal-600 dark:border-teal-400 dark:text-teal-400' : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
             onClick={() => setActiveTab('sharing')}
           >
             Udostępnianie
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-5 bg-white">
+        <div className="flex-1 overflow-y-auto p-5 bg-white dark:bg-zinc-900">
           {activeTab === 'general' && <GeneralTab trip={trip} onClose={onClose} refetchTrips={refetchTrips} />}
           {activeTab === 'logistics' && <LogisticsTab trip={trip} onClose={onClose} refetchTrips={refetchTrips} />}
           {activeTab === 'sharing' && <SharingTab trip={trip} />}
@@ -94,18 +95,18 @@ function GeneralTab({ trip, onClose, refetchTrips }) {
 
   return (
     <div className="space-y-5">
-      {error && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg">{error}</div>}
+      {error && <div className="p-3 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 text-sm rounded-lg">{error}</div>}
 
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1.5">Nazwa wyjazdu</label>
-        <input type="text" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Nazwa wyjazdu</label>
+        <input type="text" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" />
       </div>
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1.5">Cel podróży</label>
-        <input type="text" value={formData.destination} onChange={e => setFormData({ ...formData, destination: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Cel podróży</label>
+        <input type="text" value={formData.destination} onChange={e => setFormData({ ...formData, destination: e.target.value })} className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" />
 
         {formData.destination && (
-          <div className="mt-3 w-full h-40 bg-slate-100 rounded-xl overflow-hidden border border-slate-200 relative">
+          <div className="mt-3 w-full h-40 bg-zinc-100 dark:bg-zinc-800 rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-700 relative">
             <iframe
               width="100%"
               height="100%"
@@ -115,26 +116,27 @@ function GeneralTab({ trip, onClose, refetchTrips }) {
               marginWidth="0"
               src={`https://maps.google.com/maps?q=${encodeURIComponent(formData.destination)}&t=&z=11&ie=UTF8&iwloc=&output=embed`}
               title="Minimapa celu podróży"
+              className="dark:opacity-80"
             ></iframe>
           </div>
         )}
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1.5">Od</label>
-          <input type="date" value={formData.start_date} onChange={e => setFormData({ ...formData, start_date: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Od</label>
+          <input type="date" value={formData.start_date} onChange={e => setFormData({ ...formData, start_date: e.target.value })} className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1.5">Do</label>
-          <input type="date" value={formData.end_date} onChange={e => setFormData({ ...formData, end_date: e.target.value })} className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Do</label>
+          <input type="date" value={formData.end_date} onChange={e => setFormData({ ...formData, end_date: e.target.value })} className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" />
         </div>
       </div>
 
-      <div className="pt-6 flex items-center justify-between border-t border-slate-100 mt-6">
-        <button onClick={handleDelete} disabled={loading} className="flex items-center text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-lg transition-colors text-sm font-medium">
+      <div className="pt-6 flex items-center justify-between border-t border-zinc-100 dark:border-zinc-800 mt-6">
+        <button onClick={handleDelete} disabled={loading} className="flex items-center text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-900/30 px-3 py-2 rounded-lg transition-colors text-sm font-medium">
           <Trash size={16} className="mr-1.5" /> Usuń wyjazd
         </button>
-        <button onClick={handleSave} disabled={loading} className="flex items-center bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors text-sm font-medium">
+        <button onClick={handleSave} disabled={loading} className="flex items-center bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-white px-4 py-2 rounded-lg transition-colors text-sm font-medium shadow-sm">
           {loading ? <Loader2 size={16} className="animate-spin mr-1.5" /> : <Save size={16} className="mr-1.5" />}
           Zapisz zmiany
         </button>
@@ -145,7 +147,7 @@ function GeneralTab({ trip, onClose, refetchTrips }) {
 
 function LogisticsTab({ trip, onClose, refetchTrips }) {
   const { fetchTripDetails, updateTrip } = useTrips();
-  const [data, setData] = useState({ participants: [], transports: [], accommodations: [], schedule: [] });
+  const [data, setData] = useState({ participants: [], transports: [], accommodations: [], schedule: [], parkings: [], insurances: [], carRentals: [] });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -196,26 +198,26 @@ function LogisticsTab({ trip, onClose, refetchTrips }) {
       {/* Uczestnicy */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-medium text-slate-700 flex items-center"><Users size={18} className="text-indigo-500 mr-2" /> Ekipa wyjazdowa</h3>
-          <button onClick={() => addItem('participants', { firstName: '', lastName: '', email: '', type: 'dorosły', discounts: '' })} className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center"><Plus size={16} className="mr-1" /> Dodaj</button>
+          <h3 className="font-medium text-zinc-700 dark:text-zinc-300 flex items-center"><Users size={18} className="text-indigo-500 mr-2" /> Ekipa wyjazdowa</h3>
+          <button onClick={() => addItem('participants', { firstName: '', lastName: '', email: '', type: 'dorosły', discounts: '' })} className="text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 text-sm font-medium flex items-center"><Plus size={16} className="mr-1" /> Dodaj</button>
         </div>
         <div className="space-y-3">
-          {data.participants.length === 0 && <div className="text-sm text-slate-400 italic">Brak dodanych uczestników</div>}
+          {data.participants.length === 0 && <div className="text-sm text-zinc-400 dark:text-zinc-500 italic">Brak dodanych uczestników</div>}
           {data.participants.map(item => (
-            <div key={item.id} className="bg-slate-50 p-3 rounded-lg border border-slate-100 flex gap-2">
+            <div key={item.id} className="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-lg border border-zinc-100 dark:border-zinc-700 flex gap-2">
               <div className="flex-1 grid grid-cols-2 gap-2">
-                <input type="text" placeholder="Imię" value={item.firstName} onChange={e => updateItem('participants', item.id, 'firstName', e.target.value)} className="px-2 py-1.5 text-sm border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500" />
-                <input type="text" placeholder="Nazwisko" value={item.lastName} onChange={e => updateItem('participants', item.id, 'lastName', e.target.value)} className="px-2 py-1.5 text-sm border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500" />
-                <input type="email" placeholder="E-mail (opcjonalnie)" value={item.email} onChange={e => updateItem('participants', item.id, 'email', e.target.value)} className="px-2 py-1.5 text-sm border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <input type="text" placeholder="Imię" value={item.firstName} onChange={e => updateItem('participants', item.id, 'firstName', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded focus:outline-none focus:ring-1 focus:ring-teal-500" />
+                <input type="text" placeholder="Nazwisko" value={item.lastName} onChange={e => updateItem('participants', item.id, 'lastName', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded focus:outline-none focus:ring-1 focus:ring-teal-500" />
+                <input type="email" placeholder="E-mail (opcjonalnie)" value={item.email} onChange={e => updateItem('participants', item.id, 'email', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded focus:outline-none focus:ring-1 focus:ring-teal-500" />
                 <div className="flex gap-2">
-                  <select value={item.type} onChange={e => updateItem('participants', item.id, 'type', e.target.value)} className="px-2 py-1.5 text-sm border border-slate-200 rounded w-full focus:outline-none focus:ring-1 focus:ring-blue-500">
+                  <select value={item.type} onChange={e => updateItem('participants', item.id, 'type', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-full focus:outline-none focus:ring-1 focus:ring-teal-500">
                     <option value="dorosły">Dorosły</option>
                     <option value="dziecko">Dziecko</option>
                   </select>
-                  <input type="text" placeholder="Zniżki" value={item.discounts} onChange={e => updateItem('participants', item.id, 'discounts', e.target.value)} className="px-2 py-1.5 text-sm border border-slate-200 rounded w-full focus:outline-none focus:ring-1 focus:ring-blue-500" title="Np. Karta Dużej Rodziny" />
+                  <input type="text" placeholder="Zniżki" value={item.discounts} onChange={e => updateItem('participants', item.id, 'discounts', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-full focus:outline-none focus:ring-1 focus:ring-teal-500" title="Np. Karta Dużej Rodziny" />
                 </div>
               </div>
-              <button onClick={() => removeItem('participants', item.id)} className="text-slate-400 hover:text-red-500 mt-1"><Trash size={16} /></button>
+              <button onClick={() => removeItem('participants', item.id)} className="text-zinc-400 hover:text-rose-500 mt-1"><Trash size={16} /></button>
             </div>
           ))}
         </div>
@@ -224,40 +226,40 @@ function LogisticsTab({ trip, onClose, refetchTrips }) {
       {/* Transport */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-medium text-slate-700 flex items-center"><Plane size={18} className="text-sky-500 mr-2" /> Transport</h3>
-          <button onClick={() => addItem('transports', { type: 'samolot', from: '', to: '', depDate: '', depTime: '', arrDate: '', arrTime: '', bookingInfo: '' })} className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center"><Plus size={16} className="mr-1" /> Dodaj</button>
+          <h3 className="font-medium text-zinc-700 dark:text-zinc-300 flex items-center"><Plane size={18} className="text-sky-500 mr-2" /> Transport</h3>
+          <button onClick={() => addItem('transports', { type: 'samolot', from: '', to: '', depDate: '', depTime: '', arrDate: '', arrTime: '', bookingInfo: '' })} className="text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 text-sm font-medium flex items-center"><Plus size={16} className="mr-1" /> Dodaj</button>
         </div>
         <div className="space-y-3">
-          {data.transports.length === 0 && <div className="text-sm text-slate-400 italic">Brak dodanego transportu</div>}
+          {data.transports.length === 0 && <div className="text-sm text-zinc-400 dark:text-zinc-500 italic">Brak dodanego transportu</div>}
           {data.transports.map(item => (
-            <div key={item.id} className="bg-slate-50 p-3 rounded-lg border border-slate-100 flex gap-2">
+            <div key={item.id} className="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-lg border border-zinc-100 dark:border-zinc-700 flex gap-2">
               <div className="flex-1 space-y-2">
                 <div className="flex gap-2">
-                  <select value={item.type} onChange={e => updateItem('transports', item.id, 'type', e.target.value)} className="px-2 py-1.5 text-sm border border-slate-200 rounded w-1/2 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                  <select value={item.type} onChange={e => updateItem('transports', item.id, 'type', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-1/2 focus:outline-none focus:ring-1 focus:ring-teal-500">
                     <option value="samolot">Samolot</option>
                     <option value="autobus">Autobus</option>
                     <option value="pociąg">Pociąg</option>
                     <option value="auto">Auto</option>
                     <option value="statek">Statek</option>
                   </select>
-                  <input type="text" placeholder="Z (np. Warszawa WAW)" value={item.from} onChange={e => updateItem('transports', item.id, 'from', e.target.value)} className="px-2 py-1.5 text-sm border border-slate-200 rounded w-full focus:outline-none focus:ring-1 focus:ring-blue-500" />
-                  <input type="text" placeholder="Do (np. Barcelona BCN)" value={item.to} onChange={e => updateItem('transports', item.id, 'to', e.target.value)} className="px-2 py-1.5 text-sm border border-slate-200 rounded w-full focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                  <input type="text" placeholder="Z (np. Warszawa WAW)" value={item.from} onChange={e => updateItem('transports', item.id, 'from', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-full focus:outline-none focus:ring-1 focus:ring-teal-500" />
+                  <input type="text" placeholder="Do (np. Barcelona BCN)" value={item.to} onChange={e => updateItem('transports', item.id, 'to', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-full focus:outline-none focus:ring-1 focus:ring-teal-500" />
                 </div>
                 <div className="flex gap-2">
-                  <div className="w-full flex items-center space-x-2 bg-white px-2 rounded border border-slate-200">
-                    <span className="text-xs text-slate-400 font-medium w-10">Wyjazd</span>
-                    <input type="date" value={item.depDate} onChange={e => updateItem('transports', item.id, 'depDate', e.target.value)} className="py-1 text-sm w-full focus:outline-none" />
-                    <input type="time" value={item.depTime} onChange={e => updateItem('transports', item.id, 'depTime', e.target.value)} className="py-1 text-sm w-full focus:outline-none" />
+                  <div className="w-full flex items-center space-x-2 bg-white dark:bg-zinc-900 px-2 rounded border border-zinc-200 dark:border-zinc-700">
+                    <span className="text-xs text-zinc-400 font-medium w-10">Wyjazd</span>
+                    <input type="date" value={item.depDate} onChange={e => updateItem('transports', item.id, 'depDate', e.target.value)} className="py-1 text-sm w-full bg-transparent dark:text-white focus:outline-none" />
+                    <input type="time" value={item.depTime} onChange={e => updateItem('transports', item.id, 'depTime', e.target.value)} className="py-1 text-sm w-full bg-transparent dark:text-white focus:outline-none" />
                   </div>
-                  <div className="w-full flex items-center space-x-2 bg-white px-2 rounded border border-slate-200">
-                    <span className="text-xs text-slate-400 font-medium w-12">Przyjazd</span>
-                    <input type="date" value={item.arrDate} onChange={e => updateItem('transports', item.id, 'arrDate', e.target.value)} className="py-1 text-sm w-full focus:outline-none" />
-                    <input type="time" value={item.arrTime} onChange={e => updateItem('transports', item.id, 'arrTime', e.target.value)} className="py-1 text-sm w-full focus:outline-none" />
+                  <div className="w-full flex items-center space-x-2 bg-white dark:bg-zinc-900 px-2 rounded border border-zinc-200 dark:border-zinc-700">
+                    <span className="text-xs text-zinc-400 font-medium w-12">Przyjazd</span>
+                    <input type="date" value={item.arrDate} onChange={e => updateItem('transports', item.id, 'arrDate', e.target.value)} className="py-1 text-sm w-full bg-transparent dark:text-white focus:outline-none" />
+                    <input type="time" value={item.arrTime} onChange={e => updateItem('transports', item.id, 'arrTime', e.target.value)} className="py-1 text-sm w-full bg-transparent dark:text-white focus:outline-none" />
                   </div>
                 </div>
-                <input type="text" placeholder="Dane bookingu (np. WizzAir W6 1234, PNR: XYZ123)" value={item.bookingInfo} onChange={e => updateItem('transports', item.id, 'bookingInfo', e.target.value)} className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <input type="text" placeholder="Dane bookingu (np. WizzAir W6 1234, PNR: XYZ123)" value={item.bookingInfo} onChange={e => updateItem('transports', item.id, 'bookingInfo', e.target.value)} className="w-full px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded focus:outline-none focus:ring-1 focus:ring-teal-500" />
               </div>
-              <button onClick={() => removeItem('transports', item.id)} className="text-slate-400 hover:text-red-500 mt-1"><Trash size={16} /></button>
+              <button onClick={() => removeItem('transports', item.id)} className="text-zinc-400 hover:text-rose-500 mt-1"><Trash size={16} /></button>
             </div>
           ))}
         </div>
@@ -266,27 +268,105 @@ function LogisticsTab({ trip, onClose, refetchTrips }) {
       {/* Zakwaterowanie */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-medium text-slate-700 flex items-center"><Hotel size={18} className="text-amber-500 mr-2" /> Noclegi</h3>
-          <button onClick={() => addItem('accommodations', { name: '', address: '', dateFrom: '', dateTo: '', bookingInfo: '' })} className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center"><Plus size={16} className="mr-1" /> Dodaj</button>
+          <h3 className="font-medium text-zinc-700 dark:text-zinc-300 flex items-center"><Hotel size={18} className="text-amber-500 mr-2" /> Noclegi</h3>
+          <button onClick={() => addItem('accommodations', { name: '', address: '', dateFrom: '', dateTo: '', bookingInfo: '' })} className="text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 text-sm font-medium flex items-center"><Plus size={16} className="mr-1" /> Dodaj</button>
         </div>
         <div className="space-y-3">
-          {data.accommodations.length === 0 && <div className="text-sm text-slate-400 italic">Brak dodanych noclegów</div>}
+          {data.accommodations.length === 0 && <div className="text-sm text-zinc-400 dark:text-zinc-500 italic">Brak dodanych noclegów</div>}
           {data.accommodations.map(item => (
-            <div key={item.id} className="bg-slate-50 p-3 rounded-lg border border-slate-100 flex gap-2">
+            <div key={item.id} className="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-lg border border-zinc-100 dark:border-zinc-700 flex gap-2">
               <div className="flex-1 space-y-2">
                 <div className="flex gap-2">
-                  <input type="text" placeholder="Nazwa hotelu / Airbnb" value={item.name} onChange={e => updateItem('accommodations', item.id, 'name', e.target.value)} className="px-2 py-1.5 text-sm border border-slate-200 rounded w-full focus:outline-none focus:ring-1 focus:ring-blue-500" />
-                  <input type="text" placeholder="Adres" value={item.address} onChange={e => updateItem('accommodations', item.id, 'address', e.target.value)} className="px-2 py-1.5 text-sm border border-slate-200 rounded w-full focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                  <input type="text" placeholder="Nazwa hotelu / Airbnb" value={item.name} onChange={e => updateItem('accommodations', item.id, 'name', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-full focus:outline-none focus:ring-1 focus:ring-teal-500" />
+                  <input type="text" placeholder="Adres" value={item.address} onChange={e => updateItem('accommodations', item.id, 'address', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-full focus:outline-none focus:ring-1 focus:ring-teal-500" />
                 </div>
-                <div className="flex gap-2 items-center bg-white px-2 py-1 rounded border border-slate-200">
-                  <span className="text-xs text-slate-400 font-medium">Od:</span>
-                  <input type="date" value={item.dateFrom} onChange={e => updateItem('accommodations', item.id, 'dateFrom', e.target.value)} className="px-2 text-sm w-full focus:outline-none" />
-                  <span className="text-xs text-slate-400 font-medium border-l border-slate-200 pl-2">Do:</span>
-                  <input type="date" value={item.dateTo} onChange={e => updateItem('accommodations', item.id, 'dateTo', e.target.value)} className="px-2 text-sm w-full focus:outline-none" />
+                <div className="flex gap-2 items-center bg-white dark:bg-zinc-900 px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700">
+                  <span className="text-xs text-zinc-400 font-medium">Od:</span>
+                  <input type="date" value={item.dateFrom} onChange={e => updateItem('accommodations', item.id, 'dateFrom', e.target.value)} className="px-2 text-sm w-full bg-transparent dark:text-white focus:outline-none" />
+                  <span className="text-xs text-zinc-400 font-medium border-l border-zinc-200 dark:border-zinc-700 pl-2">Do:</span>
+                  <input type="date" value={item.dateTo} onChange={e => updateItem('accommodations', item.id, 'dateTo', e.target.value)} className="px-2 text-sm w-full bg-transparent dark:text-white focus:outline-none" />
                 </div>
-                <input type="text" placeholder="Dodatkowe informacje (nr rezerwacji, PIN, check-in 15:00)" value={item.bookingInfo} onChange={e => updateItem('accommodations', item.id, 'bookingInfo', e.target.value)} className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <input type="text" placeholder="Dodatkowe informacje (nr rezerwacji, PIN, check-in 15:00)" value={item.bookingInfo} onChange={e => updateItem('accommodations', item.id, 'bookingInfo', e.target.value)} className="w-full px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded focus:outline-none focus:ring-1 focus:ring-teal-500" />
               </div>
-              <button onClick={() => removeItem('accommodations', item.id)} className="text-slate-400 hover:text-red-500 mt-1"><Trash size={16} /></button>
+              <button onClick={() => removeItem('accommodations', item.id)} className="text-zinc-400 hover:text-rose-500 mt-1"><Trash size={16} /></button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Wynajem aut */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-medium text-zinc-700 dark:text-zinc-300 flex items-center"><Car size={18} className="text-purple-500 mr-2" /> Wynajem auta</h3>
+          <button onClick={() => addItem('carRentals', { company: '', location: '', dateFrom: '', dateTo: '', bookingInfo: '' })} className="text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 text-sm font-medium flex items-center"><Plus size={16} className="mr-1" /> Dodaj</button>
+        </div>
+        <div className="space-y-3">
+          {(!data.carRentals || data.carRentals.length === 0) && <div className="text-sm text-zinc-400 dark:text-zinc-500 italic">Brak wynajętych aut</div>}
+          {data.carRentals?.map(item => (
+            <div key={item.id} className="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-lg border border-zinc-100 dark:border-zinc-700 flex gap-2">
+              <div className="flex-1 space-y-2">
+                <div className="flex gap-2">
+                  <input type="text" placeholder="Wypożyczalnia (np. Hertz, Sixt)" value={item.company} onChange={e => updateItem('carRentals', item.id, 'company', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-1/3 focus:outline-none focus:ring-1 focus:ring-teal-500" />
+                  <input type="text" placeholder="Miejsce odbioru/zwrotu" value={item.location} onChange={e => updateItem('carRentals', item.id, 'location', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-full focus:outline-none focus:ring-1 focus:ring-teal-500" />
+                </div>
+                <div className="flex gap-2 items-center bg-white dark:bg-zinc-900 px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700">
+                  <span className="text-xs text-zinc-400 font-medium">Od:</span>
+                  <input type="date" value={item.dateFrom} onChange={e => updateItem('carRentals', item.id, 'dateFrom', e.target.value)} className="px-2 text-sm w-full bg-transparent dark:text-white focus:outline-none" />
+                  <span className="text-xs text-zinc-400 font-medium border-l border-zinc-200 dark:border-zinc-700 pl-2">Do:</span>
+                  <input type="date" value={item.dateTo} onChange={e => updateItem('carRentals', item.id, 'dateTo', e.target.value)} className="px-2 text-sm w-full bg-transparent dark:text-white focus:outline-none" />
+                </div>
+                <input type="text" placeholder="Dodatkowe informacje (nr rezerwacji, ubezpieczenie, auto)" value={item.bookingInfo} onChange={e => updateItem('carRentals', item.id, 'bookingInfo', e.target.value)} className="w-full px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded focus:outline-none focus:ring-1 focus:ring-teal-500" />
+              </div>
+              <button onClick={() => removeItem('carRentals', item.id)} className="text-zinc-400 hover:text-rose-500 mt-1"><Trash size={16} /></button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Parkingi */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-medium text-zinc-700 dark:text-zinc-300 flex items-center"><MapPin size={18} className="text-slate-500 mr-2" /> Parkingi</h3>
+          <button onClick={() => addItem('parkings', { location: '', dateFrom: '', dateTo: '', bookingInfo: '' })} className="text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 text-sm font-medium flex items-center"><Plus size={16} className="mr-1" /> Dodaj</button>
+        </div>
+        <div className="space-y-3">
+          {(!data.parkings || data.parkings.length === 0) && <div className="text-sm text-zinc-400 dark:text-zinc-500 italic">Brak dodanych parkingów</div>}
+          {data.parkings?.map(item => (
+            <div key={item.id} className="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-lg border border-zinc-100 dark:border-zinc-700 flex gap-2">
+              <div className="flex-1 space-y-2">
+                <input type="text" placeholder="Adres / Nazwa parkingu (np. P1 Lotnisko Chopina)" value={item.location} onChange={e => updateItem('parkings', item.id, 'location', e.target.value)} className="w-full px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded focus:outline-none focus:ring-1 focus:ring-teal-500" />
+                <div className="flex gap-2 items-center bg-white dark:bg-zinc-900 px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700">
+                  <span className="text-xs text-zinc-400 font-medium">Od:</span>
+                  <input type="date" value={item.dateFrom} onChange={e => updateItem('parkings', item.id, 'dateFrom', e.target.value)} className="px-2 text-sm w-full bg-transparent dark:text-white focus:outline-none" />
+                  <span className="text-xs text-zinc-400 font-medium border-l border-zinc-200 dark:border-zinc-700 pl-2">Do:</span>
+                  <input type="date" value={item.dateTo} onChange={e => updateItem('parkings', item.id, 'dateTo', e.target.value)} className="px-2 text-sm w-full bg-transparent dark:text-white focus:outline-none" />
+                </div>
+                <input type="text" placeholder="Informacje (nr rezerwacji, kod wjazdu)" value={item.bookingInfo} onChange={e => updateItem('parkings', item.id, 'bookingInfo', e.target.value)} className="w-full px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded focus:outline-none focus:ring-1 focus:ring-teal-500" />
+              </div>
+              <button onClick={() => removeItem('parkings', item.id)} className="text-zinc-400 hover:text-rose-500 mt-1"><Trash size={16} /></button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Ubezpieczenia */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-medium text-zinc-700 dark:text-zinc-300 flex items-center"><FileText size={18} className="text-rose-500 mr-2" /> Ubezpieczenia</h3>
+          <button onClick={() => addItem('insurances', { company: '', policyNumber: '', contactInfo: '' })} className="text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 text-sm font-medium flex items-center"><Plus size={16} className="mr-1" /> Dodaj</button>
+        </div>
+        <div className="space-y-3">
+          {(!data.insurances || data.insurances.length === 0) && <div className="text-sm text-zinc-400 dark:text-zinc-500 italic">Brak dodanych ubezpieczeń</div>}
+          {data.insurances?.map(item => (
+            <div key={item.id} className="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-lg border border-zinc-100 dark:border-zinc-700 flex gap-2">
+              <div className="flex-1 space-y-2">
+                <div className="flex gap-2">
+                  <input type="text" placeholder="Firma ubezpieczeniowa (np. PZU, Warta)" value={item.company} onChange={e => updateItem('insurances', item.id, 'company', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-1/2 focus:outline-none focus:ring-1 focus:ring-teal-500" />
+                  <input type="text" placeholder="Numer polisy" value={item.policyNumber} onChange={e => updateItem('insurances', item.id, 'policyNumber', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-1/2 focus:outline-none focus:ring-1 focus:ring-teal-500" />
+                </div>
+                <input type="text" placeholder="Kontakt w razie nagłych wypadków / Infolinia / Zakres" value={item.contactInfo} onChange={e => updateItem('insurances', item.id, 'contactInfo', e.target.value)} className="w-full px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded focus:outline-none focus:ring-1 focus:ring-teal-500" />
+              </div>
+              <button onClick={() => removeItem('insurances', item.id)} className="text-zinc-400 hover:text-rose-500 mt-1"><Trash size={16} /></button>
             </div>
           ))}
         </div>
@@ -295,29 +375,29 @@ function LogisticsTab({ trip, onClose, refetchTrips }) {
       {/* Harmonogram */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-medium text-slate-700 flex items-center"><Clock size={18} className="text-emerald-500 mr-2" /> Harmonogram dzienny</h3>
-          <button onClick={() => addItem('schedule', { day: '', time: '', place: '', info: '' })} className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center"><Plus size={16} className="mr-1" /> Dodaj</button>
+          <h3 className="font-medium text-zinc-700 dark:text-zinc-300 flex items-center"><Clock size={18} className="text-emerald-500 mr-2" /> Harmonogram dzienny</h3>
+          <button onClick={() => addItem('schedule', { day: '', time: '', place: '', info: '' })} className="text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 text-sm font-medium flex items-center"><Plus size={16} className="mr-1" /> Dodaj</button>
         </div>
         <div className="space-y-3">
-          {data.schedule.length === 0 && <div className="text-sm text-slate-400 italic">Brak elementów harmonogramu</div>}
+          {data.schedule.length === 0 && <div className="text-sm text-zinc-400 dark:text-zinc-500 italic">Brak elementów harmonogramu</div>}
           {data.schedule.map(item => (
-            <div key={item.id} className="bg-slate-50 p-3 rounded-lg border border-slate-100 flex gap-2">
+            <div key={item.id} className="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-lg border border-zinc-100 dark:border-zinc-700 flex gap-2">
               <div className="flex-1 space-y-2">
                 <div className="flex gap-2">
-                  <input type="text" placeholder="Dzień (np. Dzień 1 / 25 Lis)" value={item.day} onChange={e => updateItem('schedule', item.id, 'day', e.target.value)} className="px-2 py-1.5 text-sm border border-slate-200 rounded w-1/3 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-                  <input type="time" value={item.time} onChange={e => updateItem('schedule', item.id, 'time', e.target.value)} className="px-2 py-1.5 text-sm border border-slate-200 rounded w-1/4 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-                  <input type="text" placeholder="Miejsce" value={item.place} onChange={e => updateItem('schedule', item.id, 'place', e.target.value)} className="px-2 py-1.5 text-sm border border-slate-200 rounded w-full focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                  <input type="text" placeholder="Dzień (np. Dzień 1 / 25 Lis)" value={item.day} onChange={e => updateItem('schedule', item.id, 'day', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-1/3 focus:outline-none focus:ring-1 focus:ring-teal-500" />
+                  <input type="time" value={item.time} onChange={e => updateItem('schedule', item.id, 'time', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-1/4 focus:outline-none focus:ring-1 focus:ring-teal-500" />
+                  <input type="text" placeholder="Miejsce" value={item.place} onChange={e => updateItem('schedule', item.id, 'place', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-full focus:outline-none focus:ring-1 focus:ring-teal-500" />
                 </div>
-                <input type="text" placeholder="Dodatkowe informacje (np. bilety kupione na 10:00)" value={item.info} onChange={e => updateItem('schedule', item.id, 'info', e.target.value)} className="w-full px-2 py-1.5 text-sm border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <input type="text" placeholder="Dodatkowe informacje (np. bilety kupione na 10:00)" value={item.info} onChange={e => updateItem('schedule', item.id, 'info', e.target.value)} className="w-full px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded focus:outline-none focus:ring-1 focus:ring-teal-500" />
               </div>
-              <button onClick={() => removeItem('schedule', item.id)} className="text-slate-400 hover:text-red-500 mt-1"><Trash size={16} /></button>
+              <button onClick={() => removeItem('schedule', item.id)} className="text-zinc-400 hover:text-rose-500 mt-1"><Trash size={16} /></button>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="pt-4 flex justify-end border-t border-slate-100 mt-4">
-        <button onClick={handleSave} disabled={saving} className="flex items-center bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors text-sm font-medium">
+      <div className="pt-4 flex justify-end border-t border-zinc-100 dark:border-zinc-800 mt-4">
+        <button onClick={handleSave} disabled={saving} className="flex items-center bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-white px-4 py-2 rounded-lg transition-colors text-sm font-medium shadow-sm">
           {saving ? <Loader2 size={16} className="animate-spin mr-1.5" /> : <Save size={16} className="mr-1.5" />}
           Zapisz logistykę
         </button>
@@ -378,17 +458,17 @@ function SharingTab({ trip }) {
     <div className="space-y-6">
       {/* Sugestie */}
       {availableSuggestions.length > 0 && (
-        <div className="bg-blue-50/50 p-3 rounded-xl border border-blue-100">
-          <h3 className="text-xs font-medium text-blue-800 uppercase tracking-wider mb-2">Sugerowane osoby</h3>
+        <div className="bg-teal-50/50 dark:bg-teal-900/20 p-3 rounded-xl border border-teal-100 dark:border-teal-900/50">
+          <h3 className="text-xs font-medium text-teal-800 dark:text-teal-400 uppercase tracking-wider mb-2">Sugerowane osoby</h3>
           <div className="flex flex-wrap gap-2">
             {availableSuggestions.map(su => (
               <button
                 key={su.id}
                 onClick={() => handleGrant(su.id)}
-                className="flex items-center bg-white px-3 py-1.5 border border-blue-200 rounded-full text-sm hover:border-blue-400 hover:bg-blue-50 transition-colors shadow-sm"
+                className="flex items-center bg-white dark:bg-zinc-800 px-3 py-1.5 border border-teal-200 dark:border-teal-800 rounded-full text-sm hover:border-teal-400 dark:hover:border-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors shadow-sm"
               >
-                <Plus size={14} className="mr-1 text-blue-500" />
-                <span className="font-medium text-slate-700">{su.name || su.email.split('@')[0]}</span>
+                <Plus size={14} className="mr-1 text-teal-500" />
+                <span className="font-medium text-zinc-700 dark:text-zinc-300">{su.name || su.email.split('@')[0]}</span>
               </button>
             ))}
           </div>
@@ -397,29 +477,29 @@ function SharingTab({ trip }) {
 
       {/* Wyszukiwarka */}
       <div className="relative">
-        <label className="block text-sm font-medium text-slate-700 mb-1.5">Zaproś osobę po adresie e-mail</label>
+        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Zaproś osobę po adresie e-mail</label>
         <div className="relative">
           <input
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             placeholder="Szukaj e-maila (min. 3 znaki)..."
-            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 dark:text-white"
           />
-          {isSearching && <Loader2 size={18} className="absolute right-3 top-3 animate-spin text-slate-400" />}
+          {isSearching && <Loader2 size={18} className="absolute right-3 top-3 animate-spin text-zinc-400" />}
         </div>
 
         {searchResults.length > 0 && (
-          <div className="absolute z-10 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
+          <div className="absolute z-10 mt-1 w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-lg overflow-hidden">
             {searchResults.map(profile => (
-              <div key={profile.id} className="flex items-center justify-between p-3 hover:bg-slate-50 border-b border-slate-100 last:border-0">
+              <div key={profile.id} className="flex items-center justify-between p-3 hover:bg-zinc-50 dark:hover:bg-zinc-700/50 border-b border-zinc-100 dark:border-zinc-700 last:border-0">
                 <div>
-                  <div className="font-medium text-slate-800 text-sm">{profile.name || 'Nieznany'}</div>
-                  <div className="text-xs text-slate-500">{profile.email}</div>
+                  <div className="font-medium text-zinc-800 dark:text-zinc-200 text-sm">{profile.name || 'Nieznany'}</div>
+                  <div className="text-xs text-zinc-500 dark:text-zinc-400">{profile.email}</div>
                 </div>
                 <button
                   onClick={() => handleGrant(profile.id)}
-                  className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex items-center text-xs font-medium"
+                  className="p-1.5 text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/30 rounded-lg transition-colors flex items-center text-xs font-medium"
                 >
                   <UserPlus size={16} className="mr-1" /> Dodaj
                 </button>
@@ -431,24 +511,24 @@ function SharingTab({ trip }) {
 
       {/* Lista dostępu */}
       <div>
-        <h3 className="text-sm font-medium text-slate-700 mb-3">Osoby z dostępem</h3>
+        <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3">Osoby z dostępem</h3>
         {loading ? (
-          <div className="flex justify-center py-4"><Loader2 className="animate-spin text-slate-400" /></div>
+          <div className="flex justify-center py-4"><Loader2 className="animate-spin text-zinc-400" /></div>
         ) : users.length === 0 ? (
-          <div className="text-sm text-slate-400 italic py-2 text-center">Brak dodanych osób.</div>
+          <div className="text-sm text-zinc-400 dark:text-zinc-500 italic py-2 text-center">Brak dodanych osób.</div>
         ) : (
           <div className="space-y-2">
             {users.map(u => {
               const profileInfo = getProfileInfo(u);
               return (
-                <div key={u.user_id} className="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-xl shadow-sm">
+                <div key={u.user_id} className="flex items-center justify-between p-3 bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 rounded-xl shadow-sm">
                   <div className="flex items-center space-x-3">
-                    <div className={`p-2 rounded-full ${u.access_level === 'admin' ? 'bg-rose-100 text-rose-600' : u.access_level === 'full' ? 'bg-amber-100 text-amber-600' : u.access_level === 'basic' ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-600'}`}>
+                    <div className={`p-2 rounded-full ${u.access_level === 'admin' ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400' : u.access_level === 'full' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400' : u.access_level === 'basic' ? 'bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400' : 'bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400'}`}>
                       {u.access_level === 'admin' ? <ShieldAlert size={16} /> : u.access_level === 'full' ? <Shield size={16} /> : <User size={16} />}
                     </div>
                     <div>
-                      <div className="font-medium text-slate-800 text-sm">{profileInfo.name}</div>
-                      <div className="text-xs text-slate-500">{profileInfo.email}</div>
+                      <div className="font-medium text-zinc-800 dark:text-zinc-200 text-sm">{profileInfo.name}</div>
+                      <div className="text-xs text-zinc-500 dark:text-zinc-400">{profileInfo.email}</div>
                     </div>
                   </div>
 
@@ -459,7 +539,7 @@ function SharingTab({ trip }) {
                         const res = await updateAccess(trip.id, u.user_id, e.target.value);
                         if (!res.success) alert('Błąd aktualizacji: ' + res.error + '\nByć może masz ustawiony constraint (ograniczenie) na kolumnie w bazie.');
                       }}
-                      className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-slate-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="text-xs border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-1.5 bg-zinc-50 dark:bg-zinc-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-teal-500"
                       disabled={u.user_id === user.id} // You shouldn't demote yourself if you are the only admin
                     >
                       <option value="admin">Admin (Edycja)</option>
@@ -473,7 +553,7 @@ function SharingTab({ trip }) {
                           const res = await revokeAccess(trip.id, u.user_id);
                           if (!res.success) alert('Błąd usuwania dostępu: ' + res.error);
                         }}
-                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-1.5 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-lg transition-colors"
                         title="Usuń dostęp"
                       >
                         <X size={16} />

@@ -51,10 +51,19 @@ export function useTrips() {
         .maybeSingle();
 
       if (error) throw error;
-      return data || { participants: [], transports: [], accommodations: [], schedule: [] };
+      const d = data || {};
+      return {
+        participants: d.participants || [],
+        transports: d.transports || [],
+        accommodations: d.accommodations || [],
+        schedule: d.schedule || [],
+        parkings: d.parkings || [],
+        insurances: d.insurances || [],
+        carRentals: d.car_rentals || []
+      };
     } catch (err) {
       console.error('Błąd podczas pobierania szczegółów wyjazdu:', err.message);
-      return { participants: [], transports: [], accommodations: [], schedule: [] };
+      return { participants: [], transports: [], accommodations: [], schedule: [], parkings: [], insurances: [], carRentals: [] };
     }
   };
 
@@ -101,7 +110,10 @@ export function useTrips() {
           participants: tripDetailsObj.participants || [],
           transports: tripDetailsObj.transports || [],
           accommodations: tripDetailsObj.accommodations || [],
-          schedule: tripDetailsObj.schedule || []
+          schedule: tripDetailsObj.schedule || [],
+          parkings: tripDetailsObj.parkings || [],
+          insurances: tripDetailsObj.insurances || [],
+          car_rentals: tripDetailsObj.carRentals || []
         };
         const { error } = await supabase.from('trip_details').upsert(payload);
         if (error) throw error;
