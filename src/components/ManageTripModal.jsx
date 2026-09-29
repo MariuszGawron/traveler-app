@@ -205,12 +205,12 @@ function LogisticsTab({ trip, onClose, refetchTrips }) {
           {data.participants.length === 0 && <div className="text-sm text-zinc-400 dark:text-zinc-500 italic">Brak dodanych uczestników</div>}
           {data.participants.map(item => (
             <div key={item.id} className="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-lg border border-zinc-100 dark:border-zinc-700 flex gap-2">
-              <div className="flex-1 grid grid-cols-2 gap-2">
+              <div className="flex-1 min-w-0 grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <input type="text" placeholder="Imię" value={item.firstName} onChange={e => updateItem('participants', item.id, 'firstName', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded focus:outline-none focus:ring-1 focus:ring-teal-500" />
                 <input type="text" placeholder="Nazwisko" value={item.lastName} onChange={e => updateItem('participants', item.id, 'lastName', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded focus:outline-none focus:ring-1 focus:ring-teal-500" />
                 <input type="email" placeholder="E-mail (opcjonalnie)" value={item.email} onChange={e => updateItem('participants', item.id, 'email', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded focus:outline-none focus:ring-1 focus:ring-teal-500" />
                 <div className="flex gap-2">
-                  <select value={item.type} onChange={e => updateItem('participants', item.id, 'type', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-full focus:outline-none focus:ring-1 focus:ring-teal-500">
+                  <select value={item.type} onChange={e => updateItem('participants', item.id, 'type', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-full sm:w-auto focus:outline-none focus:ring-1 focus:ring-teal-500">
                     <option value="dorosły">Dorosły</option>
                     <option value="dziecko">Dziecko</option>
                   </select>
@@ -233,9 +233,9 @@ function LogisticsTab({ trip, onClose, refetchTrips }) {
           {data.transports.length === 0 && <div className="text-sm text-zinc-400 dark:text-zinc-500 italic">Brak dodanego transportu</div>}
           {data.transports.map(item => (
             <div key={item.id} className="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-lg border border-zinc-100 dark:border-zinc-700 flex gap-2">
-              <div className="flex-1 space-y-2">
-                <div className="flex gap-2">
-                  <select value={item.type} onChange={e => updateItem('transports', item.id, 'type', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-1/2 focus:outline-none focus:ring-1 focus:ring-teal-500">
+              <div className="flex-1 min-w-0 space-y-2">
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <select value={item.type} onChange={e => updateItem('transports', item.id, 'type', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-full sm:w-1/3 focus:outline-none focus:ring-1 focus:ring-teal-500">
                     <option value="samolot">Samolot</option>
                     <option value="autobus">Autobus</option>
                     <option value="pociąg">Pociąg</option>
@@ -245,16 +245,20 @@ function LogisticsTab({ trip, onClose, refetchTrips }) {
                   <input type="text" placeholder="Z (np. Warszawa WAW)" value={item.from} onChange={e => updateItem('transports', item.id, 'from', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-full focus:outline-none focus:ring-1 focus:ring-teal-500" />
                   <input type="text" placeholder="Do (np. Barcelona BCN)" value={item.to} onChange={e => updateItem('transports', item.id, 'to', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-full focus:outline-none focus:ring-1 focus:ring-teal-500" />
                 </div>
-                <div className="flex gap-2">
-                  <div className="w-full flex items-center space-x-2 bg-white dark:bg-zinc-900 px-2 rounded border border-zinc-200 dark:border-zinc-700">
-                    <span className="text-xs text-zinc-400 font-medium w-10">Wyjazd</span>
-                    <input type="date" value={item.depDate} onChange={e => updateItem('transports', item.id, 'depDate', e.target.value)} className="py-1 text-sm w-full bg-transparent dark:text-white focus:outline-none" />
-                    <input type="time" value={item.depTime} onChange={e => updateItem('transports', item.id, 'depTime', e.target.value)} className="py-1 text-sm w-full bg-transparent dark:text-white focus:outline-none" />
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="flex flex-col gap-1 w-full">
+                    <span className="text-xs text-zinc-500 font-medium ml-1">Wyjazd</span>
+                    <div className="flex gap-2">
+                      <input type="date" value={item.depDate} onChange={e => updateItem('transports', item.id, 'depDate', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-full focus:outline-none focus:ring-1 focus:ring-teal-500" />
+                      <input type="time" value={item.depTime} onChange={e => updateItem('transports', item.id, 'depTime', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-24 shrink-0 focus:outline-none focus:ring-1 focus:ring-teal-500" />
+                    </div>
                   </div>
-                  <div className="w-full flex items-center space-x-2 bg-white dark:bg-zinc-900 px-2 rounded border border-zinc-200 dark:border-zinc-700">
-                    <span className="text-xs text-zinc-400 font-medium w-12">Przyjazd</span>
-                    <input type="date" value={item.arrDate} onChange={e => updateItem('transports', item.id, 'arrDate', e.target.value)} className="py-1 text-sm w-full bg-transparent dark:text-white focus:outline-none" />
-                    <input type="time" value={item.arrTime} onChange={e => updateItem('transports', item.id, 'arrTime', e.target.value)} className="py-1 text-sm w-full bg-transparent dark:text-white focus:outline-none" />
+                  <div className="flex flex-col gap-1 w-full">
+                    <span className="text-xs text-zinc-500 font-medium ml-1">Przyjazd</span>
+                    <div className="flex gap-2">
+                      <input type="date" value={item.arrDate} onChange={e => updateItem('transports', item.id, 'arrDate', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-full focus:outline-none focus:ring-1 focus:ring-teal-500" />
+                      <input type="time" value={item.arrTime} onChange={e => updateItem('transports', item.id, 'arrTime', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-24 shrink-0 focus:outline-none focus:ring-1 focus:ring-teal-500" />
+                    </div>
                   </div>
                 </div>
                 <input type="text" placeholder="Dane bookingu (np. WizzAir W6 1234, PNR: XYZ123)" value={item.bookingInfo} onChange={e => updateItem('transports', item.id, 'bookingInfo', e.target.value)} className="w-full px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded focus:outline-none focus:ring-1 focus:ring-teal-500" />
@@ -275,16 +279,20 @@ function LogisticsTab({ trip, onClose, refetchTrips }) {
           {data.accommodations.length === 0 && <div className="text-sm text-zinc-400 dark:text-zinc-500 italic">Brak dodanych noclegów</div>}
           {data.accommodations.map(item => (
             <div key={item.id} className="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-lg border border-zinc-100 dark:border-zinc-700 flex gap-2">
-              <div className="flex-1 space-y-2">
-                <div className="flex gap-2">
+              <div className="flex-1 min-w-0 space-y-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input type="text" placeholder="Nazwa hotelu / Airbnb" value={item.name} onChange={e => updateItem('accommodations', item.id, 'name', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-full focus:outline-none focus:ring-1 focus:ring-teal-500" />
                   <input type="text" placeholder="Adres" value={item.address} onChange={e => updateItem('accommodations', item.id, 'address', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-full focus:outline-none focus:ring-1 focus:ring-teal-500" />
                 </div>
-                <div className="flex gap-2 items-center bg-white dark:bg-zinc-900 px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700">
-                  <span className="text-xs text-zinc-400 font-medium">Od:</span>
-                  <input type="date" value={item.dateFrom} onChange={e => updateItem('accommodations', item.id, 'dateFrom', e.target.value)} className="px-2 text-sm w-full bg-transparent dark:text-white focus:outline-none" />
-                  <span className="text-xs text-zinc-400 font-medium border-l border-zinc-200 dark:border-zinc-700 pl-2">Do:</span>
-                  <input type="date" value={item.dateTo} onChange={e => updateItem('accommodations', item.id, 'dateTo', e.target.value)} className="px-2 text-sm w-full bg-transparent dark:text-white focus:outline-none" />
+                <div className="flex flex-col sm:flex-row gap-2 sm:items-center bg-white dark:bg-zinc-900 px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700">
+                  <div className="flex items-center w-full">
+                    <span className="text-xs text-zinc-400 font-medium w-8">Od:</span>
+                    <input type="date" value={item.dateFrom} onChange={e => updateItem('accommodations', item.id, 'dateFrom', e.target.value)} className="px-2 text-sm w-full bg-transparent dark:text-white focus:outline-none" />
+                  </div>
+                  <div className="flex items-center w-full sm:border-l sm:border-zinc-200 dark:border-zinc-700 sm:pl-2 mt-1 sm:mt-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-zinc-100 dark:border-zinc-800">
+                    <span className="text-xs text-zinc-400 font-medium w-8">Do:</span>
+                    <input type="date" value={item.dateTo} onChange={e => updateItem('accommodations', item.id, 'dateTo', e.target.value)} className="px-2 text-sm w-full bg-transparent dark:text-white focus:outline-none" />
+                  </div>
                 </div>
                 <input type="text" placeholder="Dodatkowe informacje (nr rezerwacji, PIN, check-in 15:00)" value={item.bookingInfo} onChange={e => updateItem('accommodations', item.id, 'bookingInfo', e.target.value)} className="w-full px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded focus:outline-none focus:ring-1 focus:ring-teal-500" />
               </div>
@@ -304,16 +312,20 @@ function LogisticsTab({ trip, onClose, refetchTrips }) {
           {(!data.carRentals || data.carRentals.length === 0) && <div className="text-sm text-zinc-400 dark:text-zinc-500 italic">Brak wynajętych aut</div>}
           {data.carRentals?.map(item => (
             <div key={item.id} className="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-lg border border-zinc-100 dark:border-zinc-700 flex gap-2">
-              <div className="flex-1 space-y-2">
-                <div className="flex gap-2">
-                  <input type="text" placeholder="Wypożyczalnia (np. Hertz, Sixt)" value={item.company} onChange={e => updateItem('carRentals', item.id, 'company', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-1/3 focus:outline-none focus:ring-1 focus:ring-teal-500" />
+              <div className="flex-1 min-w-0 space-y-2">
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input type="text" placeholder="Wypożyczalnia (np. Hertz, Sixt)" value={item.company} onChange={e => updateItem('carRentals', item.id, 'company', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-full sm:w-1/3 focus:outline-none focus:ring-1 focus:ring-teal-500" />
                   <input type="text" placeholder="Miejsce odbioru/zwrotu" value={item.location} onChange={e => updateItem('carRentals', item.id, 'location', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-full focus:outline-none focus:ring-1 focus:ring-teal-500" />
                 </div>
-                <div className="flex gap-2 items-center bg-white dark:bg-zinc-900 px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700">
-                  <span className="text-xs text-zinc-400 font-medium">Od:</span>
-                  <input type="date" value={item.dateFrom} onChange={e => updateItem('carRentals', item.id, 'dateFrom', e.target.value)} className="px-2 text-sm w-full bg-transparent dark:text-white focus:outline-none" />
-                  <span className="text-xs text-zinc-400 font-medium border-l border-zinc-200 dark:border-zinc-700 pl-2">Do:</span>
-                  <input type="date" value={item.dateTo} onChange={e => updateItem('carRentals', item.id, 'dateTo', e.target.value)} className="px-2 text-sm w-full bg-transparent dark:text-white focus:outline-none" />
+                <div className="flex flex-col sm:flex-row gap-2 sm:items-center bg-white dark:bg-zinc-900 px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700">
+                  <div className="flex items-center w-full">
+                    <span className="text-xs text-zinc-400 font-medium w-8">Od:</span>
+                    <input type="date" value={item.dateFrom} onChange={e => updateItem('carRentals', item.id, 'dateFrom', e.target.value)} className="px-2 text-sm w-full bg-transparent dark:text-white focus:outline-none" />
+                  </div>
+                  <div className="flex items-center w-full sm:border-l sm:border-zinc-200 dark:border-zinc-700 sm:pl-2 mt-1 sm:mt-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-zinc-100 dark:border-zinc-800">
+                    <span className="text-xs text-zinc-400 font-medium w-8">Do:</span>
+                    <input type="date" value={item.dateTo} onChange={e => updateItem('carRentals', item.id, 'dateTo', e.target.value)} className="px-2 text-sm w-full bg-transparent dark:text-white focus:outline-none" />
+                  </div>
                 </div>
                 <input type="text" placeholder="Dodatkowe informacje (nr rezerwacji, ubezpieczenie, auto)" value={item.bookingInfo} onChange={e => updateItem('carRentals', item.id, 'bookingInfo', e.target.value)} className="w-full px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded focus:outline-none focus:ring-1 focus:ring-teal-500" />
               </div>
@@ -333,13 +345,17 @@ function LogisticsTab({ trip, onClose, refetchTrips }) {
           {(!data.parkings || data.parkings.length === 0) && <div className="text-sm text-zinc-400 dark:text-zinc-500 italic">Brak dodanych parkingów</div>}
           {data.parkings?.map(item => (
             <div key={item.id} className="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-lg border border-zinc-100 dark:border-zinc-700 flex gap-2">
-              <div className="flex-1 space-y-2">
+              <div className="flex-1 min-w-0 space-y-2">
                 <input type="text" placeholder="Adres / Nazwa parkingu (np. P1 Lotnisko Chopina)" value={item.location} onChange={e => updateItem('parkings', item.id, 'location', e.target.value)} className="w-full px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded focus:outline-none focus:ring-1 focus:ring-teal-500" />
-                <div className="flex gap-2 items-center bg-white dark:bg-zinc-900 px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700">
-                  <span className="text-xs text-zinc-400 font-medium">Od:</span>
-                  <input type="date" value={item.dateFrom} onChange={e => updateItem('parkings', item.id, 'dateFrom', e.target.value)} className="px-2 text-sm w-full bg-transparent dark:text-white focus:outline-none" />
-                  <span className="text-xs text-zinc-400 font-medium border-l border-zinc-200 dark:border-zinc-700 pl-2">Do:</span>
-                  <input type="date" value={item.dateTo} onChange={e => updateItem('parkings', item.id, 'dateTo', e.target.value)} className="px-2 text-sm w-full bg-transparent dark:text-white focus:outline-none" />
+                <div className="flex flex-col sm:flex-row gap-2 sm:items-center bg-white dark:bg-zinc-900 px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700">
+                  <div className="flex items-center w-full">
+                    <span className="text-xs text-zinc-400 font-medium w-8">Od:</span>
+                    <input type="date" value={item.dateFrom} onChange={e => updateItem('parkings', item.id, 'dateFrom', e.target.value)} className="px-2 text-sm w-full bg-transparent dark:text-white focus:outline-none" />
+                  </div>
+                  <div className="flex items-center w-full sm:border-l sm:border-zinc-200 dark:border-zinc-700 sm:pl-2 mt-1 sm:mt-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-zinc-100 dark:border-zinc-800">
+                    <span className="text-xs text-zinc-400 font-medium w-8">Do:</span>
+                    <input type="date" value={item.dateTo} onChange={e => updateItem('parkings', item.id, 'dateTo', e.target.value)} className="px-2 text-sm w-full bg-transparent dark:text-white focus:outline-none" />
+                  </div>
                 </div>
                 <input type="text" placeholder="Informacje (nr rezerwacji, kod wjazdu)" value={item.bookingInfo} onChange={e => updateItem('parkings', item.id, 'bookingInfo', e.target.value)} className="w-full px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded focus:outline-none focus:ring-1 focus:ring-teal-500" />
               </div>
@@ -359,10 +375,10 @@ function LogisticsTab({ trip, onClose, refetchTrips }) {
           {(!data.insurances || data.insurances.length === 0) && <div className="text-sm text-zinc-400 dark:text-zinc-500 italic">Brak dodanych ubezpieczeń</div>}
           {data.insurances?.map(item => (
             <div key={item.id} className="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-lg border border-zinc-100 dark:border-zinc-700 flex gap-2">
-              <div className="flex-1 space-y-2">
-                <div className="flex gap-2">
-                  <input type="text" placeholder="Firma ubezpieczeniowa (np. PZU, Warta)" value={item.company} onChange={e => updateItem('insurances', item.id, 'company', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-1/2 focus:outline-none focus:ring-1 focus:ring-teal-500" />
-                  <input type="text" placeholder="Numer polisy" value={item.policyNumber} onChange={e => updateItem('insurances', item.id, 'policyNumber', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-1/2 focus:outline-none focus:ring-1 focus:ring-teal-500" />
+              <div className="flex-1 min-w-0 space-y-2">
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input type="text" placeholder="Firma ubezpieczeniowa (np. PZU, Warta)" value={item.company} onChange={e => updateItem('insurances', item.id, 'company', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-full focus:outline-none focus:ring-1 focus:ring-teal-500" />
+                  <input type="text" placeholder="Numer polisy" value={item.policyNumber} onChange={e => updateItem('insurances', item.id, 'policyNumber', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-full focus:outline-none focus:ring-1 focus:ring-teal-500" />
                 </div>
                 <input type="text" placeholder="Kontakt w razie nagłych wypadków / Infolinia / Zakres" value={item.contactInfo} onChange={e => updateItem('insurances', item.id, 'contactInfo', e.target.value)} className="w-full px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded focus:outline-none focus:ring-1 focus:ring-teal-500" />
               </div>
@@ -382,10 +398,12 @@ function LogisticsTab({ trip, onClose, refetchTrips }) {
           {data.schedule.length === 0 && <div className="text-sm text-zinc-400 dark:text-zinc-500 italic">Brak elementów harmonogramu</div>}
           {data.schedule.map(item => (
             <div key={item.id} className="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-lg border border-zinc-100 dark:border-zinc-700 flex gap-2">
-              <div className="flex-1 space-y-2">
-                <div className="flex gap-2">
-                  <input type="text" placeholder="Dzień (np. Dzień 1 / 25 Lis)" value={item.day} onChange={e => updateItem('schedule', item.id, 'day', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-1/3 focus:outline-none focus:ring-1 focus:ring-teal-500" />
-                  <input type="time" value={item.time} onChange={e => updateItem('schedule', item.id, 'time', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-1/4 focus:outline-none focus:ring-1 focus:ring-teal-500" />
+              <div className="flex-1 min-w-0 space-y-2">
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    <input type="text" placeholder="Dzień (np. Dzień 1 / 25 Lis)" value={item.day} onChange={e => updateItem('schedule', item.id, 'day', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-full focus:outline-none focus:ring-1 focus:ring-teal-500" />
+                    <input type="time" value={item.time} onChange={e => updateItem('schedule', item.id, 'time', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-24 focus:outline-none focus:ring-1 focus:ring-teal-500" />
+                  </div>
                   <input type="text" placeholder="Miejsce" value={item.place} onChange={e => updateItem('schedule', item.id, 'place', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-full focus:outline-none focus:ring-1 focus:ring-teal-500" />
                 </div>
                 <input type="text" placeholder="Dodatkowe informacje (np. bilety kupione na 10:00)" value={item.info} onChange={e => updateItem('schedule', item.id, 'info', e.target.value)} className="w-full px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded focus:outline-none focus:ring-1 focus:ring-teal-500" />

@@ -280,27 +280,27 @@ export default function TripCard({ trip, refetchTrips }) {
         className={`p-5 flex items-center justify-between ${trip.role !== 'basic' && trip.role !== 'minimal' ? 'cursor-pointer' : ''}`}
         onClick={trip.role === 'admin' || trip.role === 'full' ? handleToggle : undefined}
       >
-        <div className="flex-1">
-          <div className="flex items-center text-zinc-500 dark:text-zinc-400 text-sm font-medium mb-1 space-x-4">
-            <span className="flex items-center">
-              <Calendar size={16} className="mr-1.5 text-teal-500 dark:text-teal-400" />
+        <div className="flex-1 min-w-0 pr-4">
+          <div className="flex flex-wrap items-center text-zinc-500 dark:text-zinc-400 text-sm font-medium mb-1 gap-x-4 gap-y-2">
+            <span className="flex items-center whitespace-nowrap">
+              <Calendar size={16} className="mr-1.5 text-teal-500 dark:text-teal-400 flex-shrink-0" />
               {formatDate(trip.start_date)} - {formatDate(trip.end_date)}
             </span>
             {trip.role !== 'minimal' && (
-              <span className="flex items-center">
-                <MapPin size={16} className="mr-1.5 text-rose-500 dark:text-rose-400" />
-                {trip.destination}
+              <span className="flex items-center min-w-0">
+                <MapPin size={16} className="mr-1.5 text-rose-500 dark:text-rose-400 flex-shrink-0" />
+                <span className="truncate">{trip.destination}</span>
               </span>
             )}
-            <span className="flex items-center text-zinc-400 dark:text-zinc-500 bg-zinc-100 dark:bg-zinc-700 px-2 py-0.5 rounded-full text-xs">
-              <Crown size={12} className="mr-1 text-amber-500 dark:text-amber-400" />
+            <span className="flex items-center text-zinc-400 dark:text-zinc-500 bg-zinc-100 dark:bg-zinc-700 px-2 py-0.5 rounded-full text-xs whitespace-nowrap">
+              <Crown size={12} className="mr-1 text-amber-500 dark:text-amber-400 flex-shrink-0" />
               {trip.founderName}
             </span>
           </div>
           {trip.role !== 'minimal' ? (
-            <h3 className="text-xl font-bold text-zinc-800 dark:text-white">{trip.title}</h3>
+            <h3 className="text-lg sm:text-xl font-bold text-zinc-800 dark:text-white break-words">{trip.title}</h3>
           ) : (
-            <h3 className="text-xl font-bold text-zinc-400 dark:text-zinc-500 italic">Wyjazd ukryty</h3>
+            <h3 className="text-lg sm:text-xl font-bold text-zinc-400 dark:text-zinc-500 italic">Wyjazd ukryty</h3>
           )}
         </div>
 
@@ -379,7 +379,7 @@ export default function TripCard({ trip, refetchTrips }) {
                     <div className="font-semibold text-zinc-800 dark:text-zinc-200 capitalize mb-1">{trans.type} z {trans.from} do {trans.to}</div>
 
                     {(trans.depDate || trans.arrDate) && (
-                      <div className="grid grid-cols-2 gap-2 mt-2 bg-zinc-50 dark:bg-zinc-700/30 p-2 rounded text-xs">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 bg-zinc-50 dark:bg-zinc-700/30 p-2 rounded text-xs">
                         <div>
                           <div className="font-medium text-zinc-500 dark:text-zinc-500">Wylot/Wyjazd</div>
                           <div>{trans.depDate} {trans.depTime}</div>
@@ -392,7 +392,7 @@ export default function TripCard({ trip, refetchTrips }) {
                     )}
                     {trans.bookingInfo && (
                       <div className="mt-2 text-xs">
-                        <span className="bg-zinc-100 dark:bg-zinc-700 font-mono px-1.5 py-0.5 rounded border border-zinc-200 dark:border-zinc-600">{trans.bookingInfo}</span>
+                        <span className="bg-zinc-100 dark:bg-zinc-700 font-mono px-1.5 py-0.5 rounded border border-zinc-200 dark:border-zinc-600 break-all inline-block">{trans.bookingInfo}</span>
                       </div>
                     )}
                     {trans.from && trans.to && mapSettings?.transport && (
@@ -435,7 +435,7 @@ export default function TripCard({ trip, refetchTrips }) {
                         {hotel.dateFrom} &mdash; {hotel.dateTo}
                       </div>
                     )}
-                    {hotel.bookingInfo && <div className="text-xs mt-2">{hotel.bookingInfo}</div>}
+                    {hotel.bookingInfo && <div className="text-xs mt-2 break-words">{hotel.bookingInfo}</div>}
                     {hotel.address && mapSettings?.accommodations && (
                       <div className="mt-3 w-full h-32 bg-zinc-100 dark:bg-zinc-800 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700 relative">
                         <iframe
@@ -476,7 +476,7 @@ export default function TripCard({ trip, refetchTrips }) {
                         {rental.dateFrom} &mdash; {rental.dateTo}
                       </div>
                     )}
-                    {rental.bookingInfo && <div className="text-xs mt-2">{rental.bookingInfo}</div>}
+                    {rental.bookingInfo && <div className="text-xs mt-2 break-words">{rental.bookingInfo}</div>}
                     {rental.location && mapSettings?.carRentals && (
                       <div className="mt-3 w-full h-32 bg-zinc-100 dark:bg-zinc-800 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700 relative">
                         <iframe
@@ -513,7 +513,7 @@ export default function TripCard({ trip, refetchTrips }) {
                         {parking.dateFrom} &mdash; {parking.dateTo}
                       </div>
                     )}
-                    {parking.bookingInfo && <div className="text-xs mt-2">{parking.bookingInfo}</div>}
+                    {parking.bookingInfo && <div className="text-xs mt-2 break-words">{parking.bookingInfo}</div>}
                     {parking.location && mapSettings?.parkings && (
                       <div className="mt-3 w-full h-32 bg-zinc-100 dark:bg-zinc-800 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700 relative">
                         <iframe
@@ -567,9 +567,9 @@ export default function TripCard({ trip, refetchTrips }) {
                       <span className="font-semibold text-zinc-700 dark:text-zinc-300">{sched.day}</span>
                       <span className="text-xs text-zinc-500 dark:text-zinc-500">{sched.time}</span>
                     </div>
-                    <div className="flex-1">
-                      <div className="font-medium text-zinc-800 dark:text-zinc-200">{sched.place}</div>
-                      {sched.info && <div className="text-zinc-500 dark:text-zinc-400 text-xs mt-0.5">{sched.info}</div>}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-zinc-800 dark:text-zinc-200 break-words">{sched.place}</div>
+                      {sched.info && <div className="text-zinc-500 dark:text-zinc-400 text-xs mt-0.5 break-words">{sched.info}</div>}
                       {renderAttachments('schedule', sched, idx)}
                     </div>
                   </div>
