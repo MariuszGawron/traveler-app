@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Loader2, LogOut, Compass, Plus, Map, Wallet, CheckSquare, UserCircle, Sun, Moon, Settings } from 'lucide-react';
+import { Loader2, LogOut, Compass, Plus, Map, UserCircle, Sun, Moon, Settings, Calendar } from 'lucide-react';
 import { useTrips } from '../hooks/useTrips';
 import TripCard from './TripCard';
+import CalendarView from './CalendarView';
 import { useStore } from '../store/useStore';
 import CreateTripModal from './CreateTripModal';
 import ProfileModal from './ProfileModal';
@@ -14,7 +15,11 @@ export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [currentView, setCurrentView] = useState('trips');
+  const [showOnlyMine, setShowOnlyMine] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => document.documentElement.classList.contains('dark'));
+
+  const displayedTrips = showOnlyMine ? trips.filter(t => t.role === 'admin') : trips;
 
   const toggleTheme = () => {
     if (isDarkMode) {
@@ -39,18 +44,29 @@ export default function Dashboard() {
           </div>
 
           <nav className="hidden md:flex items-center space-x-1">
-            <button className="px-4 py-2 text-sm font-medium text-teal-700 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/30 rounded-lg flex items-center">
+            <button 
+              onClick={() => setCurrentView('trips')}
+              className={`px-4 py-2 text-sm font-medium rounded-lg flex items-center transition-colors ${currentView === 'trips' ? 'text-teal-700 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/30' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800'}`}>
               <Map size={16} className="mr-1.5" /> Moje Wyjazdy
             </button>
-            <button className="px-4 py-2 text-sm font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-lg flex items-center transition-colors" title="Wkrótce!">
-              <Wallet size={16} className="mr-1.5" /> Rozliczenia
-            </button>
-            <button className="px-4 py-2 text-sm font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-lg flex items-center transition-colors" title="Wkrótce!">
-              <CheckSquare size={16} className="mr-1.5" /> Ekwipunek
+            <button 
+              onClick={() => setCurrentView('calendar')}
+              className={`px-4 py-2 text-sm font-medium rounded-lg flex items-center transition-colors ${currentView === 'calendar' ? 'text-teal-700 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/30' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800'}`}>
+              <Calendar size={16} className="mr-1.5" /> Kalendarz
             </button>
           </nav>
 
           <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 mr-1 sm:mr-3 px-2 sm:px-3 py-1 sm:border-r border-zinc-200 dark:border-zinc-700">
+              <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 hidden sm:inline-block">Tylko moje</span>
+              <button 
+                onClick={() => setShowOnlyMine(!showOnlyMine)}
+                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors ${showOnlyMine ? 'bg-teal-500' : 'bg-zinc-300 dark:bg-zinc-700'}`}
+                title="Pokaż tylko wyjazdy, których jestem autorem"
+              >
+                <span className={`pointer-events-none inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ease-in-out ${showOnlyMine ? 'translate-x-2' : '-translate-x-2'}`} />
+              </button>
+            </div>
             <span className="text-sm font-medium text-zinc-600 dark:text-zinc-300 hidden sm:inline-block px-3 py-1 bg-zinc-100 dark:bg-zinc-800 rounded-full mr-2">
               {user?.email}
             </span>
@@ -112,7 +128,7 @@ export default function Dashboard() {
             <Loader2 className="animate-spin mb-4" size={32} />
             <p>Ładowanie wyjazdów...</p>
           </div>
-        ) : trips.length === 0 ? (
+        ) : displayedTrips.length === 0 ? (
           <div className="text-center py-20 bg-white dark:bg-zinc-800/50 rounded-2xl border border-zinc-200 dark:border-zinc-700 border-dashed">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 mb-4">
               <Compass size={32} />
@@ -126,9 +142,11 @@ export default function Dashboard() {
               Utwórz pierwszy wyjazd
             </button>
           </div>
+        ) : currentView === 'calendar' ? (
+          <CalendarView trips={displayedTrips} />
         ) : (
           <div className="space-y-4">
-            {trips.map((trip) => (
+            {displayedTrips.map((trip) => (
               <TripCard key={trip.id} trip={trip} refetchTrips={refetchTrips} />
             ))}
           </div>

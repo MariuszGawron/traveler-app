@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, MapPin, Calendar, Plane, Hotel, Clock, Users, User, Baby, Settings, Crown, Car, FileText, Paperclip, Download, Trash2, Printer } from 'lucide-react';
+import { ChevronDown, ChevronUp, MapPin, Calendar, Plane, Hotel, Clock, Users, UserRound, Baby, Settings, Crown, Car, FileText, Paperclip, Download, Trash2, Printer, Wallet, CheckSquare, Smile } from 'lucide-react';
 import { useTrips } from '../hooks/useTrips';
 import { useStore } from '../store/useStore';
 import ManageTripModal from './ManageTripModal';
@@ -19,8 +19,8 @@ export default function TripCard({ trip, refetchTrips }) {
     const file = e.target.files[0];
     if (!file) return;
     try {
-      const ext = file.name.split('.').pop();
-      const fileName = `${crypto.randomUUID()}_${file.name}`;
+      const safeFileName = file.name.replace(/[^a-zA-Z0-9.\-_ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/g, '_');
+      const fileName = `${crypto.randomUUID()}_${safeFileName}`;
       const filePath = `${trip.id}/${fileName}`;
       const { error: uploadError } = await supabase.storage.from('travel_docs').upload(filePath, file);
       if (uploadError) throw uploadError;
@@ -72,19 +72,19 @@ export default function TripCard({ trip, refetchTrips }) {
     try {
       setPdfGenerating(true);
       const doc = await PDFDocument.create();
-      
+
       const removePL = (str) => str ? String(str).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ł/g, "l").replace(/Ł/g, "L") : "";
-      
+
       let page = doc.addPage();
       let cursorY = 800;
-      
+
       const checkPage = (needed) => {
         if (cursorY - needed < 50) {
           page = doc.addPage();
           cursorY = 800;
         }
       };
-      
+
       const drawText = (text, size) => {
         if (!text) return;
         checkPage(size + 10);
@@ -102,7 +102,10 @@ export default function TripCard({ trip, refetchTrips }) {
       drawText(`Termin: ${formatDate(trip.start_date)} - ${formatDate(trip.end_date)}`, 14);
       cursorY -= 20;
 
-      if (currentDetails.participants?.length > 0) {
+      const canSeeMedium = trip.role === 'admin' || trip.role === 'full' || trip.role === 'medium';
+      const canSeeFull = trip.role === 'admin' || trip.role === 'full';
+
+      if (canSeeMedium && currentDetails.participants?.length > 0) {
         drawText("--- EKIPA WYJAZDOWA ---", 18);
         currentDetails.participants.forEach(p => {
           drawText(`${p.firstName} ${p.lastName} (${p.type})`, 12);
@@ -113,11 +116,11 @@ export default function TripCard({ trip, refetchTrips }) {
       const processSection = async (title, items, renderItemText) => {
         if (!items || items.length === 0) return;
         drawText(`--- ${title} ---`, 18);
-        
+
         for (const item of items) {
           renderItemText(item);
-          
-          if (item.attachments && item.attachments.length > 0) {
+
+          if (canSeeFull && item.attachments && item.attachments.length > 0) {
             drawText("Zalaczniki:", 10);
             for (const att of item.attachments) {
               drawText(`- ${att.name}`, 10);
@@ -143,32 +146,42 @@ export default function TripCard({ trip, refetchTrips }) {
         }
       };
 
-      await processSection("TRANSPORT", currentDetails.transports, (t) => {
-        drawText(`${t.type} z ${t.from} do ${t.to}`, 14);
-        if (t.depDate || t.arrDate) drawText(`Wylot: ${t.depDate} ${t.depTime} | Przylot: ${t.arrDate} ${t.arrTime}`, 12);
-      });
+      if (canSeeMedium) {
+        await processSection("TRANSPORT", currentDetails.transports, (t) => {
+          drawText(`${t.type} z ${t.from} do ${t.to}`, 14);
+          if (t.depDate || t.arrDate) drawText(`Wylot: ${t.depDate} ${t.depTime} | Przylot: ${t.arrDate} ${t.arrTime}`, 12);
+        });
 
-      await processSection("ZAKWATEROWANIE", currentDetails.accommodations, (a) => {
-        drawText(`${a.name}`, 14);
-        drawText(`Adres: ${a.address}`, 12);
-        if (a.dateFrom || a.dateTo) drawText(`Od: ${a.dateFrom} Do: ${a.dateTo}`, 12);
-      });
+        await processSection("ZAKWATEROWANIE", currentDetails.accommodations, (a) => {
+          drawText(`${a.name}`, 14);
+          drawText(`Adres: ${a.address}`, 12);
+          if (a.dateFrom || a.dateTo) drawText(`Od: ${a.dateFrom} Do: ${a.dateTo}`, 12);
+        });
 
-      await processSection("WYNAJEM AUTA", currentDetails.carRentals, (r) => {
-        drawText(`${r.company}`, 14);
-        drawText(`Miejsce: ${r.location}`, 12);
-        if (r.dateFrom || r.dateTo) drawText(`Od: ${r.dateFrom} Do: ${r.dateTo}`, 12);
-      });
+        await processSection("UBEZPIECZENIA", currentDetails.insurances, (i) => {
+          drawText(`${i.company}`, 14);
+          if (i.policyNumber) drawText(`Polisa: ${i.policyNumber}`, 12);
+          if (i.contactInfo) drawText(`Kontakt: ${i.contactInfo}`, 12);
+        });
+      }
 
-      await processSection("PARKINGI", currentDetails.parkings, (p) => {
-        drawText(`${p.location}`, 14);
-        if (p.dateFrom || p.dateTo) drawText(`Od: ${p.dateFrom} Do: ${p.dateTo}`, 12);
-      });
+      if (canSeeFull) {
+        await processSection("WYNAJEM AUTA", currentDetails.carRentals, (r) => {
+          drawText(`${r.company}`, 14);
+          drawText(`Miejsce: ${r.location}`, 12);
+          if (r.dateFrom || r.dateTo) drawText(`Od: ${r.dateFrom} Do: ${r.dateTo}`, 12);
+        });
 
-      await processSection("HARMONOGRAM", currentDetails.schedule, (s) => {
-        drawText(`${s.day} ${s.time} - ${s.place}`, 14);
-        if (s.info) drawText(`Info: ${s.info}`, 12);
-      });
+        await processSection("PARKINGI", currentDetails.parkings, (p) => {
+          drawText(`${p.location}`, 14);
+          if (p.dateFrom || p.dateTo) drawText(`Od: ${p.dateFrom} Do: ${p.dateTo}`, 12);
+        });
+
+        await processSection("HARMONOGRAM", currentDetails.schedule, (s) => {
+          drawText(`${s.day} ${s.time} - ${s.place}`, 14);
+          if (s.info) drawText(`Info: ${s.info}`, 12);
+        });
+      }
 
       const pdfBytes = await doc.save();
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
@@ -185,10 +198,12 @@ export default function TripCard({ trip, refetchTrips }) {
     }
   };
 
-  const renderAttachments = (category, item, itemIdx) => (
-    <div className="mt-3 border-t border-zinc-100 dark:border-zinc-700/50 pt-3">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Załączniki</span>
+  const renderAttachments = (category, item, itemIdx) => {
+    if (trip.role !== 'admin' && trip.role !== 'full') return null;
+    return (
+      <div className="mt-3 border-t border-zinc-100 dark:border-zinc-700/50 pt-3">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Załączniki</span>
         <label className="cursor-pointer flex items-center text-xs text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 transition-colors bg-teal-50 dark:bg-teal-900/30 px-2 py-1 rounded">
           <Paperclip size={14} className="mr-1" /> Załącz plik
           <input type="file" className="hidden" accept="application/pdf,image/*" onChange={(e) => handleFileUpload(e, category, itemIdx)} />
@@ -216,7 +231,8 @@ export default function TripCard({ trip, refetchTrips }) {
         <div className="text-xs text-zinc-400 dark:text-zinc-500 italic">Brak załączników</div>
       )}
     </div>
-  );
+    );
+  };
 
   const handleToggle = async () => {
     if (!expanded) {
@@ -246,14 +262,23 @@ export default function TripCard({ trip, refetchTrips }) {
     return new Intl.DateTimeFormat('pl-PL', { day: 'numeric', month: 'short' }).format(new Date(dateStr));
   };
 
+  const getMapLocation = (loc, type) => {
+    if (type === 'samolot' && loc && !/airport|lotnisko/i.test(loc)) {
+      return `${loc} airport`;
+    }
+    return loc;
+  };
+
+  const canSeeFull = trip.role === 'admin' || trip.role === 'full';
+
   const hasLogistics = details && (
     (details.participants?.length > 0) ||
     (details.transports?.length > 0) ||
     (details.accommodations?.length > 0) ||
-    (details.schedule?.length > 0) ||
-    (details.parkings?.length > 0) ||
     (details.insurances?.length > 0) ||
-    (details.carRentals?.length > 0)
+    (canSeeFull && details.schedule?.length > 0) ||
+    (canSeeFull && details.parkings?.length > 0) ||
+    (canSeeFull && details.carRentals?.length > 0)
   );
 
   return (
@@ -278,7 +303,7 @@ export default function TripCard({ trip, refetchTrips }) {
       {/* Widok Horyzontu (Zawsze widoczny w zależności od roli) */}
       <div
         className={`p-5 flex items-center justify-between ${trip.role !== 'basic' && trip.role !== 'minimal' ? 'cursor-pointer' : ''}`}
-        onClick={trip.role === 'admin' || trip.role === 'full' ? handleToggle : undefined}
+        onClick={trip.role === 'admin' || trip.role === 'full' || trip.role === 'medium' ? handleToggle : undefined}
       >
         <div className="flex-1 min-w-0 pr-4">
           <div className="flex flex-wrap items-center text-zinc-500 dark:text-zinc-400 text-sm font-medium mb-1 gap-x-4 gap-y-2">
@@ -304,19 +329,39 @@ export default function TripCard({ trip, refetchTrips }) {
           )}
         </div>
 
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={generateMasterPdf}
-            disabled={pdfGenerating}
-            className="p-2 bg-zinc-50 dark:bg-zinc-700/50 hover:bg-teal-50 dark:hover:bg-teal-900/30 text-zinc-400 dark:text-zinc-500 hover:text-teal-600 dark:hover:text-teal-400 rounded-full transition-colors"
-            title="Generuj Master PDF (Offline)"
-          >
-            {pdfGenerating ? (
-              <div className="animate-spin rounded-full h-5 w-5 border-2 border-zinc-300 dark:border-zinc-600 border-t-teal-600 dark:border-t-teal-400"></div>
-            ) : (
-              <Printer size={20} />
-            )}
-          </button>
+        <div className="flex items-center space-x-1 sm:space-x-2">
+          {(trip.role === 'admin' || trip.role === 'full') && (
+            <>
+              <button
+                className="p-2 bg-zinc-50 dark:bg-zinc-700/50 hover:bg-teal-50 dark:hover:bg-teal-900/30 text-zinc-400 dark:text-zinc-500 hover:text-teal-600 dark:hover:text-teal-400 rounded-full transition-colors"
+                title="Wkrótce: Rozliczenia"
+                onClick={(e) => { e.stopPropagation(); }}
+              >
+                <Wallet size={20} />
+              </button>
+              <button
+                className="p-2 bg-zinc-50 dark:bg-zinc-700/50 hover:bg-teal-50 dark:hover:bg-teal-900/30 text-zinc-400 dark:text-zinc-500 hover:text-teal-600 dark:hover:text-teal-400 rounded-full transition-colors"
+                title="Wkrótce: Ekwipunek"
+                onClick={(e) => { e.stopPropagation(); }}
+              >
+                <CheckSquare size={20} />
+              </button>
+            </>
+          )}
+          {(trip.role !== 'minimal' && trip.role !== 'basic') && (
+            <button
+              onClick={generateMasterPdf}
+              disabled={pdfGenerating}
+              className="p-2 bg-zinc-50 dark:bg-zinc-700/50 hover:bg-teal-50 dark:hover:bg-teal-900/30 text-zinc-400 dark:text-zinc-500 hover:text-teal-600 dark:hover:text-teal-400 rounded-full transition-colors"
+              title="Generuj Master PDF (Offline)"
+            >
+              {pdfGenerating ? (
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-zinc-300 dark:border-zinc-600 border-t-teal-600 dark:border-t-teal-400"></div>
+              ) : (
+                <Printer size={20} />
+              )}
+            </button>
+          )}
           {trip.role === 'admin' && (
             <button
               onClick={(e) => { e.stopPropagation(); setIsManageModalOpen(true); }}
@@ -326,7 +371,7 @@ export default function TripCard({ trip, refetchTrips }) {
               <Settings size={20} />
             </button>
           )}
-          {(trip.role === 'admin' || trip.role === 'full') && (
+          {(trip.role === 'admin' || trip.role === 'full' || trip.role === 'medium') && (
             <div className="bg-zinc-50 dark:bg-zinc-700/50 p-2 rounded-full text-zinc-400 dark:text-zinc-500">
               {loading ? (
                 <div className="animate-spin rounded-full h-5 w-5 border-2 border-zinc-300 dark:border-zinc-600 border-t-teal-600 dark:border-t-teal-400"></div>
@@ -354,9 +399,16 @@ export default function TripCard({ trip, refetchTrips }) {
               <div className="flex flex-wrap gap-3">
                 {details.participants.map((member, idx) => {
                   const isKid = member.type === 'dziecko';
+                  const isYouth = member.type === 'młodzież';
+                  const colorClasses = isKid
+                    ? 'bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400'
+                    : isYouth
+                      ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
+                      : 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400';
+
                   return (
-                    <div key={idx} className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-sm font-medium ${isKid ? 'bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400' : 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400'}`}>
-                      {isKid ? <Baby size={16} /> : <User size={16} />}
+                    <div key={idx} className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-sm font-medium ${colorClasses}`}>
+                      {isKid ? <Baby size={16} /> : isYouth ? <Smile size={16} /> : <UserRound size={16} />}
                       <span>{member.firstName} {member.lastName}</span>
                       {member.discounts && <span className="ml-1 opacity-75 text-xs">({member.discounts})</span>}
                     </div>
@@ -404,7 +456,7 @@ export default function TripCard({ trip, refetchTrips }) {
                           scrolling="no"
                           marginHeight="0"
                           marginWidth="0"
-                          src={`https://maps.google.com/maps?saddr=${encodeURIComponent(trans.from)}&daddr=${encodeURIComponent(trans.to)}&dirflg=${trans.type === 'auto' ? 'd' : (trans.type === 'autobus' || trans.type === 'pociąg') ? 'r' : ''}&output=embed`}
+                          src={`https://maps.google.com/maps?saddr=${encodeURIComponent(getMapLocation(trans.from, trans.type))}&daddr=${encodeURIComponent(getMapLocation(trans.to, trans.type))}&dirflg=${trans.type === 'auto' ? 'd' : (trans.type === 'autobus' || trans.type === 'pociąg') ? 'r' : ''}&output=embed`}
                           title={`Trasa z ${trans.from} do ${trans.to}`}
                           className="dark:opacity-80 filter dark:brightness-75 dark:contrast-125"
                         ></iframe>
@@ -458,7 +510,7 @@ export default function TripCard({ trip, refetchTrips }) {
             )}
 
             {/* Wynajem auta */}
-            {details.carRentals?.length > 0 && (
+            {canSeeFull && details.carRentals?.length > 0 && (
               <div className="bg-white dark:bg-zinc-800 p-4 rounded-xl shadow-sm border border-zinc-100 dark:border-zinc-700">
                 <div className="flex items-center font-semibold text-zinc-700 dark:text-zinc-200 mb-3">
                   <Car size={18} className="mr-2 text-purple-500 dark:text-purple-400" />
@@ -499,7 +551,7 @@ export default function TripCard({ trip, refetchTrips }) {
             )}
 
             {/* Parkingi */}
-            {details.parkings?.length > 0 && (
+            {canSeeFull && details.parkings?.length > 0 && (
               <div className="bg-white dark:bg-zinc-800 p-4 rounded-xl shadow-sm border border-zinc-100 dark:border-zinc-700">
                 <div className="flex items-center font-semibold text-zinc-700 dark:text-zinc-200 mb-3">
                   <MapPin size={18} className="mr-2 text-slate-500 dark:text-slate-400" />
@@ -554,7 +606,7 @@ export default function TripCard({ trip, refetchTrips }) {
           </div>
 
           {/* Harmonogram */}
-          {details.schedule?.length > 0 && (
+          {canSeeFull && details.schedule?.length > 0 && (
             <div className="bg-white dark:bg-zinc-800 p-4 rounded-xl shadow-sm border border-zinc-100 dark:border-zinc-700">
               <div className="flex items-center font-semibold text-zinc-700 dark:text-zinc-200 mb-3">
                 <Clock size={18} className="mr-2 text-emerald-500 dark:text-emerald-400" />

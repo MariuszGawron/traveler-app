@@ -1,12 +1,36 @@
-import { useState, useEffect } from 'react';
-import { X, Loader2, Save, Trash, UserPlus, Shield, User, Users, ShieldAlert, Plus, Plane, Hotel, Clock, Map, Car, FileText, MapPin } from 'lucide-react';
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
+import { X, Loader2, Save, Trash, UserPlus, Shield, User, Users, ShieldAlert, Plus, Plane, Hotel, Clock, Map, Car, FileText, MapPin, Smile } from 'lucide-react';
 import { useTrips } from '../hooks/useTrips';
 import { useAccess } from '../hooks/useAccess';
 import { useStore } from '../store/useStore';
 
 export default function ManageTripModal({ trip, onClose, refetchTrips }) {
   const [activeTab, setActiveTab] = useState('general'); // general, logistics, sharing
+  const [isSaving, setIsSaving] = useState(false);
+  const generalRef = useRef(null);
+  const logisticsRef = useRef(null);
   const { mapSettings } = useStore();
+
+  const handleGlobalSave = async () => {
+    setIsSaving(true);
+    let success = true;
+    
+    if (generalRef.current) {
+      const gSuccess = await generalRef.current.save();
+      if (!gSuccess) success = false;
+    }
+    
+    if (logisticsRef.current) {
+      const lSuccess = await logisticsRef.current.save();
+      if (!lSuccess) success = false;
+    }
+    
+    setIsSaving(false);
+    if (success) {
+      if (refetchTrips) refetchTrips();
+      onClose();
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-zinc-900/50 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
@@ -20,38 +44,50 @@ export default function ManageTripModal({ trip, onClose, refetchTrips }) {
           </button>
         </div>
 
-        <div className="flex border-b border-zinc-100 dark:border-zinc-800 px-5 bg-white dark:bg-zinc-900">
-          <button
-            className={`py-3 px-4 font-medium text-sm border-b-2 transition-colors ${activeTab === 'general' ? 'border-teal-600 text-teal-600 dark:border-teal-400 dark:text-teal-400' : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
-            onClick={() => setActiveTab('general')}
-          >
-            Ogólne
-          </button>
-          <button
-            className={`py-3 px-4 font-medium text-sm border-b-2 transition-colors ${activeTab === 'logistics' ? 'border-teal-600 text-teal-600 dark:border-teal-400 dark:text-teal-400' : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
-            onClick={() => setActiveTab('logistics')}
-          >
-            Logistyka
-          </button>
-          <button
-            className={`py-3 px-4 font-medium text-sm border-b-2 transition-colors ${activeTab === 'sharing' ? 'border-teal-600 text-teal-600 dark:border-teal-400 dark:text-teal-400' : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
-            onClick={() => setActiveTab('sharing')}
-          >
-            Udostępnianie
+        <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 px-5 bg-white dark:bg-zinc-900">
+          <div className="flex">
+            <button
+              className={`py-3 px-4 font-medium text-sm border-b-2 transition-colors ${activeTab === 'general' ? 'border-teal-600 text-teal-600 dark:border-teal-400 dark:text-teal-400' : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
+              onClick={() => setActiveTab('general')}
+            >
+              Ogólne
+            </button>
+            <button
+              className={`py-3 px-4 font-medium text-sm border-b-2 transition-colors ${activeTab === 'logistics' ? 'border-teal-600 text-teal-600 dark:border-teal-400 dark:text-teal-400' : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
+              onClick={() => setActiveTab('logistics')}
+            >
+              Plan Wyjazdu
+            </button>
+            <button
+              className={`py-3 px-4 font-medium text-sm border-b-2 transition-colors ${activeTab === 'sharing' ? 'border-teal-600 text-teal-600 dark:border-teal-400 dark:text-teal-400' : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
+              onClick={() => setActiveTab('sharing')}
+            >
+              Udostępnianie
+            </button>
+          </div>
+          <button onClick={handleGlobalSave} disabled={isSaving} className="flex items-center bg-teal-600 hover:bg-teal-700 text-white px-4 py-1.5 rounded-lg transition-colors text-sm font-medium shadow-sm mb-1 mt-1">
+            {isSaving ? <Loader2 size={16} className="animate-spin mr-1.5" /> : <Save size={16} className="mr-1.5" />}
+            Zapisz zmiany
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-5 bg-white dark:bg-zinc-900">
-          {activeTab === 'general' && <GeneralTab trip={trip} onClose={onClose} refetchTrips={refetchTrips} />}
-          {activeTab === 'logistics' && <LogisticsTab trip={trip} onClose={onClose} refetchTrips={refetchTrips} />}
-          {activeTab === 'sharing' && <SharingTab trip={trip} />}
+          <div className={activeTab === 'general' ? 'block' : 'hidden'}>
+            <GeneralTab ref={generalRef} trip={trip} onClose={onClose} refetchTrips={refetchTrips} />
+          </div>
+          <div className={activeTab === 'logistics' ? 'block' : 'hidden'}>
+            <LogisticsTab ref={logisticsRef} trip={trip} onClose={onClose} refetchTrips={refetchTrips} />
+          </div>
+          <div className={activeTab === 'sharing' ? 'block' : 'hidden'}>
+            <SharingTab trip={trip} />
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-function GeneralTab({ trip, onClose, refetchTrips }) {
+const GeneralTab = forwardRef(({ trip, onClose, refetchTrips }, ref) => {
   const { updateTrip, deleteTrip } = useTrips();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -62,26 +98,21 @@ function GeneralTab({ trip, onClose, refetchTrips }) {
     end_date: trip.end_date || ''
   });
 
-  const handleSave = async () => {
-    // Walidacja dat
-    if (new Date(formData.end_date) < new Date(formData.start_date)) {
-      setError('Data zakonczenia musi być późniejsza lub równa dacie początkowej.');
-      return;
+  useImperativeHandle(ref, () => ({
+    save: async () => {
+      if (new Date(formData.end_date) < new Date(formData.start_date)) {
+        setError('Data zakonczenia musi być późniejsza lub równa dacie początkowej.');
+        return false;
+      }
+      setError('');
+      const res = await updateTrip(trip.id, formData);
+      if (!res.success) {
+        setError(res.error || 'Wystąpił błąd podczas zapisu.');
+        return false;
+      }
+      return true;
     }
-
-    setLoading(true);
-    setError('');
-    // Przekazujemy tylko formData, bez tripDetailsObj
-    const res = await updateTrip(trip.id, formData);
-    setLoading(false);
-
-    if (res.success) {
-      if (refetchTrips) refetchTrips();
-      onClose(); // Zamknij modal po poprawnym zapisie
-    } else {
-      setError(res.error || 'Wystąpił błąd podczas zapisu.');
-    }
-  };
+  }));
 
   const handleDelete = async () => {
     if (window.confirm('Czy na pewno chcesz usunąć ten wyjazd? Tej operacji nie można cofnąć.')) {
@@ -132,24 +163,19 @@ function GeneralTab({ trip, onClose, refetchTrips }) {
         </div>
       </div>
 
-      <div className="pt-6 flex items-center justify-between border-t border-zinc-100 dark:border-zinc-800 mt-6">
+      <div className="pt-6 flex items-center justify-start border-t border-zinc-100 dark:border-zinc-800 mt-6">
         <button onClick={handleDelete} disabled={loading} className="flex items-center text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-900/30 px-3 py-2 rounded-lg transition-colors text-sm font-medium">
           <Trash size={16} className="mr-1.5" /> Usuń wyjazd
-        </button>
-        <button onClick={handleSave} disabled={loading} className="flex items-center bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-white px-4 py-2 rounded-lg transition-colors text-sm font-medium shadow-sm">
-          {loading ? <Loader2 size={16} className="animate-spin mr-1.5" /> : <Save size={16} className="mr-1.5" />}
-          Zapisz zmiany
         </button>
       </div>
     </div>
   );
-}
+});
 
-function LogisticsTab({ trip, onClose, refetchTrips }) {
+const LogisticsTab = forwardRef(({ trip, onClose, refetchTrips }, ref) => {
   const { fetchTripDetails, updateTrip } = useTrips();
   const [data, setData] = useState({ participants: [], transports: [], accommodations: [], schedule: [], parkings: [], insurances: [], carRentals: [] });
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetchTripDetails(trip.id).then(res => {
@@ -179,17 +205,16 @@ function LogisticsTab({ trip, onClose, refetchTrips }) {
     }));
   };
 
-  const handleSave = async () => {
-    setSaving(true);
-    const res = await updateTrip(trip.id, {}, data);
-    if (!res.success) {
-      alert('Błąd zapisu logistyki: ' + res.error);
-    } else {
-      if (refetchTrips) refetchTrips();
-      if (onClose) onClose();
+  useImperativeHandle(ref, () => ({
+    save: async () => {
+      const res = await updateTrip(trip.id, {}, data);
+      if (!res.success) {
+        alert('Błąd zapisu logistyki: ' + res.error);
+        return false;
+      }
+      return true;
     }
-    setSaving(false);
-  };
+  }));
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="animate-spin text-slate-400" /></div>;
 
@@ -212,6 +237,7 @@ function LogisticsTab({ trip, onClose, refetchTrips }) {
                 <div className="flex gap-2">
                   <select value={item.type} onChange={e => updateItem('participants', item.id, 'type', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-full sm:w-auto focus:outline-none focus:ring-1 focus:ring-teal-500">
                     <option value="dorosły">Dorosły</option>
+                    <option value="młodzież">Młodzież</option>
                     <option value="dziecko">Dziecko</option>
                   </select>
                   <input type="text" placeholder="Zniżki" value={item.discounts} onChange={e => updateItem('participants', item.id, 'discounts', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded w-full focus:outline-none focus:ring-1 focus:ring-teal-500" title="Np. Karta Dużej Rodziny" />
@@ -414,15 +440,9 @@ function LogisticsTab({ trip, onClose, refetchTrips }) {
         </div>
       </div>
 
-      <div className="pt-4 flex justify-end border-t border-zinc-100 dark:border-zinc-800 mt-4">
-        <button onClick={handleSave} disabled={saving} className="flex items-center bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-white px-4 py-2 rounded-lg transition-colors text-sm font-medium shadow-sm">
-          {saving ? <Loader2 size={16} className="animate-spin mr-1.5" /> : <Save size={16} className="mr-1.5" />}
-          Zapisz logistykę
-        </button>
-      </div>
     </div>
   );
-}
+});
 
 function SharingTab({ trip }) {
   const { user } = useStore();
@@ -560,10 +580,11 @@ function SharingTab({ trip }) {
                       className="text-xs border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-1.5 bg-zinc-50 dark:bg-zinc-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-teal-500"
                       disabled={u.user_id === user.id} // You shouldn't demote yourself if you are the only admin
                     >
-                      <option value="admin">Admin (Edycja)</option>
-                      <option value="full">Pełny (Podgląd logistyki)</option>
+                      <option value="admin">Twórca (Edycja)</option>
+                      <option value="full">Pełny (Pełny podgląd)</option>
+                      <option value="medium">Średni (Częściowy podgląd)</option>
                       <option value="basic">Niski (Podgląd nagłówka)</option>
-                      <option value="minimal">Najniższy (Tylko data)</option>
+                      <option value="minimal">Minimalny (Tylko data)</option>
                     </select>
                     {u.user_id !== user.id && (
                       <button
