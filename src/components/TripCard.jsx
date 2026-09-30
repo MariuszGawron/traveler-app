@@ -271,6 +271,25 @@ export default function TripCard({ trip, refetchTrips }) {
 
   const canSeeFull = trip.role === 'admin' || trip.role === 'full';
 
+  const founderColors = [
+    'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300',
+    'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300',
+    'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
+    'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+    'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300',
+    'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+    'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+  ];
+
+  const getFounderColorClass = (name) => {
+    if (!name) return founderColors[0];
+    let sum = 0;
+    for (let i = 0; i < name.length; i++) {
+      sum += name.charCodeAt(i);
+    }
+    return founderColors[sum % founderColors.length];
+  };
+
   const hasLogistics = details && (
     (details.participants?.length > 0) ||
     (details.transports?.length > 0) ||
@@ -317,8 +336,8 @@ export default function TripCard({ trip, refetchTrips }) {
                 <span className="truncate">{trip.destination}</span>
               </span>
             )}
-            <span className="flex items-center text-zinc-400 dark:text-zinc-500 bg-zinc-100 dark:bg-zinc-700 px-2 py-0.5 rounded-full text-xs whitespace-nowrap">
-              <Crown size={12} className="mr-1 text-amber-500 dark:text-amber-400 flex-shrink-0" />
+            <span className={`flex items-center px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${getFounderColorClass(trip.founderName)}`}>
+              <Crown size={12} className="mr-1 opacity-70 flex-shrink-0" />
               {trip.founderName}
             </span>
           </div>
