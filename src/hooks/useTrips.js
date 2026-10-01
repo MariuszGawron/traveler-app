@@ -59,11 +59,13 @@ export function useTrips() {
         schedule: d.schedule || [],
         parkings: d.parkings || [],
         insurances: d.insurances || [],
-        carRentals: d.car_rentals || []
+        carRentals: d.car_rentals || [],
+        expenses: d.expenses || [],
+        checklist: d.checklist || []
       };
     } catch (err) {
       console.error('Błąd podczas pobierania szczegółów wyjazdu:', err.message);
-      return { participants: [], transports: [], accommodations: [], schedule: [], parkings: [], insurances: [], carRentals: [] };
+      return { participants: [], transports: [], accommodations: [], schedule: [], parkings: [], insurances: [], carRentals: [], expenses: [], checklist: [] };
     }
   };
 
@@ -105,15 +107,20 @@ export function useTrips() {
       }
 
       if (tripDetailsObj) {
+        const { data: currentData } = await supabase.from('trip_details').select('*').eq('trip_id', id).maybeSingle();
+        const currentDetails = currentData || {};
+
         const payload = {
           trip_id: id,
-          participants: tripDetailsObj.participants || [],
-          transports: tripDetailsObj.transports || [],
-          accommodations: tripDetailsObj.accommodations || [],
-          schedule: tripDetailsObj.schedule || [],
-          parkings: tripDetailsObj.parkings || [],
-          insurances: tripDetailsObj.insurances || [],
-          car_rentals: tripDetailsObj.carRentals || []
+          participants: tripDetailsObj.participants !== undefined ? tripDetailsObj.participants : (currentDetails.participants || []),
+          transports: tripDetailsObj.transports !== undefined ? tripDetailsObj.transports : (currentDetails.transports || []),
+          accommodations: tripDetailsObj.accommodations !== undefined ? tripDetailsObj.accommodations : (currentDetails.accommodations || []),
+          schedule: tripDetailsObj.schedule !== undefined ? tripDetailsObj.schedule : (currentDetails.schedule || []),
+          parkings: tripDetailsObj.parkings !== undefined ? tripDetailsObj.parkings : (currentDetails.parkings || []),
+          insurances: tripDetailsObj.insurances !== undefined ? tripDetailsObj.insurances : (currentDetails.insurances || []),
+          car_rentals: (tripDetailsObj.car_rentals !== undefined ? tripDetailsObj.car_rentals : tripDetailsObj.carRentals) !== undefined ? (tripDetailsObj.car_rentals || tripDetailsObj.carRentals) : (currentDetails.car_rentals || []),
+          expenses: tripDetailsObj.expenses !== undefined ? tripDetailsObj.expenses : (currentDetails.expenses || []),
+          checklist: tripDetailsObj.checklist !== undefined ? tripDetailsObj.checklist : (currentDetails.checklist || [])
         };
         const { error } = await supabase.from('trip_details').upsert(payload);
         if (error) throw error;

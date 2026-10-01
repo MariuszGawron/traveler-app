@@ -3,12 +3,16 @@ import { ChevronDown, ChevronUp, MapPin, Calendar, Plane, Hotel, Clock, Users, U
 import { useTrips } from '../hooks/useTrips';
 import { useStore } from '../store/useStore';
 import ManageTripModal from './ManageTripModal';
+import ExpensesModal from './ExpensesModal';
+import ChecklistModal from './ChecklistModal';
 import { supabase } from '../lib/supabaseClient';
 import { PDFDocument } from 'pdf-lib';
 
 export default function TripCard({ trip, refetchTrips }) {
   const [expanded, setExpanded] = useState(false);
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
+  const [isExpensesModalOpen, setIsExpensesModalOpen] = useState(false);
+  const [isChecklistModalOpen, setIsChecklistModalOpen] = useState(false);
   const [details, setDetails] = useState([]);
   const [loading, setLoading] = useState(false);
   const [pdfGenerating, setPdfGenerating] = useState(false);
@@ -353,15 +357,15 @@ export default function TripCard({ trip, refetchTrips }) {
             <>
               <button
                 className="p-2 bg-zinc-50 dark:bg-zinc-700/50 hover:bg-teal-50 dark:hover:bg-teal-900/30 text-zinc-400 dark:text-zinc-500 hover:text-teal-600 dark:hover:text-teal-400 rounded-full transition-colors"
-                title="Wkrótce: Rozliczenia"
-                onClick={(e) => { e.stopPropagation(); }}
+                title="Rozliczenia"
+                onClick={(e) => { e.stopPropagation(); setIsExpensesModalOpen(true); }}
               >
                 <Wallet size={20} />
               </button>
               <button
                 className="p-2 bg-zinc-50 dark:bg-zinc-700/50 hover:bg-teal-50 dark:hover:bg-teal-900/30 text-zinc-400 dark:text-zinc-500 hover:text-teal-600 dark:hover:text-teal-400 rounded-full transition-colors"
-                title="Wkrótce: Ekwipunek"
-                onClick={(e) => { e.stopPropagation(); }}
+                title="Ekwipunek"
+                onClick={(e) => { e.stopPropagation(); setIsChecklistModalOpen(true); }}
               >
                 <CheckSquare size={20} />
               </button>
@@ -437,10 +441,10 @@ export default function TripCard({ trip, refetchTrips }) {
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="columns-1 md:columns-2 gap-4">
             {/* Loty / Transport */}
             {details.transports?.length > 0 && (
-              <div className="bg-white dark:bg-zinc-800 p-4 rounded-xl shadow-sm border border-zinc-100 dark:border-zinc-700">
+              <div className="bg-white dark:bg-zinc-800 p-4 rounded-xl shadow-sm border border-zinc-100 dark:border-zinc-700 break-inside-avoid mb-4">
                 <div className="flex items-center font-semibold text-zinc-700 dark:text-zinc-200 mb-3">
                   <Plane size={18} className="mr-2 text-sky-500 dark:text-sky-400" />
                   Transport
@@ -489,7 +493,7 @@ export default function TripCard({ trip, refetchTrips }) {
 
             {/* Hotel */}
             {details.accommodations?.length > 0 && (
-              <div className="bg-white dark:bg-zinc-800 p-4 rounded-xl shadow-sm border border-zinc-100 dark:border-zinc-700">
+              <div className="bg-white dark:bg-zinc-800 p-4 rounded-xl shadow-sm border border-zinc-100 dark:border-zinc-700 break-inside-avoid mb-4">
                 <div className="flex items-center font-semibold text-zinc-700 dark:text-zinc-200 mb-3">
                   <Hotel size={18} className="mr-2 text-amber-500 dark:text-amber-400" />
                   Zakwaterowanie
@@ -530,7 +534,7 @@ export default function TripCard({ trip, refetchTrips }) {
 
             {/* Wynajem auta */}
             {canSeeFull && details.carRentals?.length > 0 && (
-              <div className="bg-white dark:bg-zinc-800 p-4 rounded-xl shadow-sm border border-zinc-100 dark:border-zinc-700">
+              <div className="bg-white dark:bg-zinc-800 p-4 rounded-xl shadow-sm border border-zinc-100 dark:border-zinc-700 break-inside-avoid mb-4">
                 <div className="flex items-center font-semibold text-zinc-700 dark:text-zinc-200 mb-3">
                   <Car size={18} className="mr-2 text-purple-500 dark:text-purple-400" />
                   Wynajem auta
@@ -571,7 +575,7 @@ export default function TripCard({ trip, refetchTrips }) {
 
             {/* Parkingi */}
             {canSeeFull && details.parkings?.length > 0 && (
-              <div className="bg-white dark:bg-zinc-800 p-4 rounded-xl shadow-sm border border-zinc-100 dark:border-zinc-700">
+              <div className="bg-white dark:bg-zinc-800 p-4 rounded-xl shadow-sm border border-zinc-100 dark:border-zinc-700 break-inside-avoid mb-4">
                 <div className="flex items-center font-semibold text-zinc-700 dark:text-zinc-200 mb-3">
                   <MapPin size={18} className="mr-2 text-slate-500 dark:text-slate-400" />
                   Parkingi
@@ -608,7 +612,7 @@ export default function TripCard({ trip, refetchTrips }) {
 
             {/* Ubezpieczenia */}
             {details.insurances?.length > 0 && (
-              <div className="bg-white dark:bg-zinc-800 p-4 rounded-xl shadow-sm border border-zinc-100 dark:border-zinc-700">
+              <div className="bg-white dark:bg-zinc-800 p-4 rounded-xl shadow-sm border border-zinc-100 dark:border-zinc-700 break-inside-avoid mb-4">
                 <div className="flex items-center font-semibold text-zinc-700 dark:text-zinc-200 mb-3">
                   <FileText size={18} className="mr-2 text-rose-500 dark:text-rose-400" />
                   Ubezpieczenia
@@ -622,11 +626,10 @@ export default function TripCard({ trip, refetchTrips }) {
                 ))}
               </div>
             )}
-          </div>
 
-          {/* Harmonogram */}
-          {canSeeFull && details.schedule?.length > 0 && (
-            <div className="bg-white dark:bg-zinc-800 p-4 rounded-xl shadow-sm border border-zinc-100 dark:border-zinc-700">
+            {/* Harmonogram */}
+            {canSeeFull && details.schedule?.length > 0 && (
+              <div className="bg-white dark:bg-zinc-800 p-4 rounded-xl shadow-sm border border-zinc-100 dark:border-zinc-700 break-inside-avoid mb-4">
               <div className="flex items-center font-semibold text-zinc-700 dark:text-zinc-200 mb-3">
                 <Clock size={18} className="mr-2 text-emerald-500 dark:text-emerald-400" />
                 Harmonogram dzienny
@@ -646,9 +649,9 @@ export default function TripCard({ trip, refetchTrips }) {
                   </div>
                 ))}
               </div>
-            </div>
-          )}
-
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -664,6 +667,20 @@ export default function TripCard({ trip, refetchTrips }) {
           trip={trip}
           onClose={() => setIsManageModalOpen(false)}
           refetchTrips={handleTripUpdated}
+        />
+      )}
+
+      {isExpensesModalOpen && (
+        <ExpensesModal
+          trip={trip}
+          onClose={() => setIsExpensesModalOpen(false)}
+        />
+      )}
+
+      {isChecklistModalOpen && (
+        <ChecklistModal
+          trip={trip}
+          onClose={() => setIsChecklistModalOpen(false)}
         />
       )}
     </div>

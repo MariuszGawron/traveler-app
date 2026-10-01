@@ -3,6 +3,7 @@ import { X, Loader2, Save, Trash, UserPlus, Shield, User, Users, ShieldAlert, Pl
 import { useTrips } from '../hooks/useTrips';
 import { useAccess } from '../hooks/useAccess';
 import { useStore } from '../store/useStore';
+import { supabase } from '../lib/supabaseClient';
 
 export default function ManageTripModal({ trip, onClose, refetchTrips }) {
   const [activeTab, setActiveTab] = useState('general'); // general, logistics, sharing
@@ -608,3 +609,213 @@ function SharingTab({ trip }) {
     </div>
   );
 }
+
+const ExpensesTab = forwardRef(({ trip }, ref) => {
+  const { fetchTripDetails, updateTrip } = useTrips();
+  const [data, setData] = useState({ expenses: [] });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchTripDetails(trip.id).then(res => {
+      setData({ expenses: res.expenses || [] });
+      setLoading(false);
+    });
+  }, [trip.id]);
+
+  useImperativeHandle(ref, () => ({
+    save: async () => {
+      const res = await updateTrip(trip.id, {}, data);
+      if (!res.success) {
+        alert('Błąd zapisu kosztów: ' + res.error);
+        return false;
+      }
+      return true;
+    }
+  }));
+
+  const updateItem = (id, field, value) => {
+    setData(prev => ({
+      expenses: prev.expenses.map(item => item.id === id ? { ...item, [field]: value } : item)
+    }));
+  };
+
+  const addItem = () => {
+    setData(prev => ({
+      expenses: [...prev.expenses, { id: Date.now().toString(), description: '', amount: '', currency: 'PLN', payer: '' }]
+    }));
+  };
+
+  const removeItem = (id) => {
+    setData(prev => ({
+      expenses: prev.expenses.filter(item => item.id !== id)
+    }));
+  };
+
+  if (loading) return <div className="flex justify-center py-10"><Loader2 className="animate-spin text-slate-400" /></div>;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-medium text-zinc-700 dark:text-zinc-300 flex items-center"><FileText size={18} className="text-emerald-500 mr-2" /> Rozliczenia</h3>
+        <button onClick={addItem} className="text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 text-sm font-medium flex items-center"><Plus size={16} className="mr-1" /> Dodaj koszt</button>
+      </div>
+      <div className="space-y-3">
+        {data.expenses.length === 0 && <div className="text-sm text-zinc-400 dark:text-zinc-500 italic">Brak wydatków.</div>}
+        {data.expenses.map(item => (
+          <div key={item.id} className="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-lg border border-zinc-100 dark:border-zinc-700 flex gap-2">
+            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <input type="text" placeholder="Opis (np. Paliwo)" value={item.description} onChange={e => updateItem(item.id, 'description', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded focus:outline-none focus:ring-1 focus:ring-teal-500" />
+              <input type="text" placeholder="Kto płacił?" value={item.payer} onChange={e => updateItem(item.id, 'payer', e.target.value)} className="px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded focus:outline-none focus:ring-1 focus:ring-teal-500" />
+              <div className="flex gap-2">
+                <input type="number" placeholder="Kwota" value={item.amount} onChange={e => updateItem(item.id, 'amount', e.target.value)} className="flex-1 px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded focus:outline-none focus:ring-1 focus:ring-teal-500" />
+                <input type="text" placeholder="Waluta" value={item.currency} onChange={e => updateItem(item.id, 'currency', e.target.value)} className="w-24 px-2 py-1.5 text-sm border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded focus:outline-none focus:ring-1 focus:ring-teal-500" />
+              </div>
+            </div>
+            <button onClick={() => removeItem(item.id)} className="text-zinc-400 hover:text-rose-500 mt-1"><Trash size={16} /></button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+});
+
+const ChecklistTab = forwardRef(({ trip }, ref) => {
+  const { fetchTripDetails, updateTrip } = useTrips();
+  const { user } = useStore();
+  const [data, setData] = useState({ checklist: [] });
+  const [templates, setTemplates] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [newTemplateName, setNewTemplateName] = useState('');
+  const [savingTemplate, setSavingTemplate] = useState(false);
+
+  useEffect(() => {
+    const load = async () => {
+      const res = await fetchTripDetails(trip.id);
+      setData({ checklist: res.checklist || [] });
+
+      if (user) {
+        const { data: tpls } = await supabase.from('checklist_templates').select('*').eq('user_id', user.id);
+        if (tpls) setTemplates(tpls);
+      }
+      setLoading(false);
+    };
+    load();
+  }, [trip.id, user]);
+
+  useImperativeHandle(ref, () => ({
+    save: async () => {
+      const res = await updateTrip(trip.id, {}, data);
+      if (!res.success) {
+        alert('Błąd zapisu ekwipunku: ' + res.error);
+        return false;
+      }
+      return true;
+    }
+  }));
+
+  const updateItem = (id, field, value) => {
+    setData(prev => ({
+      checklist: prev.checklist.map(item => item.id === id ? { ...item, [field]: value } : item)
+    }));
+  };
+
+  const addItem = () => {
+    setData(prev => ({
+      checklist: [...prev.checklist, { id: Date.now().toString(), text: '', isCompleted: false, assignee: '' }]
+    }));
+  };
+
+  const removeItem = (id) => {
+    setData(prev => ({
+      checklist: prev.checklist.filter(item => item.id !== id)
+    }));
+  };
+
+  const toggleStatus = (id) => {
+    setData(prev => ({
+      checklist: prev.checklist.map(item => item.id === id ? { ...item, isCompleted: !item.isCompleted } : item)
+    }));
+  };
+
+  const loadTemplate = (tpl) => {
+    if (!tpl.items) return;
+    const newItems = tpl.items.map(item => ({ ...item, id: Date.now().toString() + Math.random().toString() }));
+    setData(prev => ({ checklist: [...prev.checklist, ...newItems] }));
+  };
+
+  const saveAsTemplate = async () => {
+    if (!newTemplateName.trim()) return alert('Podaj nazwę szablonu');
+    if (data.checklist.length === 0) return alert('Lista jest pusta');
+    
+    setSavingTemplate(true);
+    const itemsToSave = data.checklist.map(({ text, assignee }) => ({ text, assignee, isCompleted: false }));
+    const { data: newTpl, error } = await supabase.from('checklist_templates').insert({
+      user_id: user.id,
+      name: newTemplateName,
+      items: itemsToSave
+    }).select().single();
+    
+    setSavingTemplate(false);
+    if (error) {
+      alert('Błąd zapisu szablonu: ' + error.message);
+    } else {
+      setTemplates([...templates, newTpl]);
+      setNewTemplateName('');
+      alert('Szablon został zapisany pomyślnie!');
+    }
+  };
+
+  if (loading) return <div className="flex justify-center py-10"><Loader2 className="animate-spin text-slate-400" /></div>;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-xl border border-zinc-100 dark:border-zinc-700">
+        <div>
+          <h4 className="font-medium text-sm text-zinc-800 dark:text-zinc-200 mb-1">Szablony ekwipunku</h4>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">Załaduj z zapisanego szablonu lub stwórz nowy na podstawie obecnej listy.</p>
+        </div>
+        <div className="flex flex-col sm:items-end gap-2">
+          {templates.length > 0 && (
+            <div className="flex items-center gap-2">
+              <select onChange={(e) => {
+                if(e.target.value) {
+                  const tpl = templates.find(t => t.id === e.target.value);
+                  if(tpl) loadTemplate(tpl);
+                  e.target.value = '';
+                }
+              }} className="px-2 py-1.5 text-xs border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white rounded focus:outline-none focus:ring-1 focus:ring-teal-500">
+                <option value="">-- Wczytaj szablon --</option>
+                {templates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </select>
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            <input type="text" placeholder="Nazwa nowego szablonu" value={newTemplateName} onChange={e => setNewTemplateName(e.target.value)} className="px-2 py-1.5 text-xs border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white rounded focus:outline-none focus:ring-1 focus:ring-teal-500" />
+            <button onClick={saveAsTemplate} disabled={savingTemplate} className="px-3 py-1.5 bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-200 rounded text-xs font-medium transition-colors flex items-center">
+              {savingTemplate ? <Loader2 size={12} className="animate-spin" /> : 'Zapisz'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between mb-3 mt-6">
+        <h3 className="font-medium text-zinc-700 dark:text-zinc-300 flex items-center"><FileText size={18} className="text-blue-500 mr-2" /> Ekwipunek i Zadania</h3>
+        <button onClick={addItem} className="text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 text-sm font-medium flex items-center"><Plus size={16} className="mr-1" /> Dodaj element</button>
+      </div>
+      
+      <div className="space-y-2">
+        {data.checklist.length === 0 && <div className="text-sm text-zinc-400 dark:text-zinc-500 italic">Lista jest pusta.</div>}
+        {data.checklist.map(item => (
+          <div key={item.id} className={`flex items-center gap-2 p-2 rounded-lg border transition-colors ${item.isCompleted ? 'bg-zinc-50/50 dark:bg-zinc-800/30 border-transparent' : 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700'}`}>
+            <button onClick={() => toggleStatus(item.id)} className={`w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${item.isCompleted ? 'bg-teal-500 border-teal-500 text-white' : 'border-zinc-300 dark:border-zinc-600 hover:border-teal-500'}`}>
+              {item.isCompleted && <svg viewBox="0 0 14 14" fill="none" className="w-3.5 h-3.5"><path d="M3 7.5L5.5 10L11 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+            </button>
+            <input type="text" placeholder="Nazwa przedmiotu / zadanie" value={item.text} onChange={e => updateItem(item.id, 'text', e.target.value)} className={`flex-1 px-2 py-1 text-sm bg-transparent border-none focus:outline-none focus:ring-0 ${item.isCompleted ? 'text-zinc-400 dark:text-zinc-500 line-through' : 'text-zinc-800 dark:text-zinc-200'}`} />
+            <input type="text" placeholder="Kto?" value={item.assignee || ''} onChange={e => updateItem(item.id, 'assignee', e.target.value)} className="w-24 sm:w-32 px-2 py-1 text-xs border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white rounded focus:outline-none focus:ring-1 focus:ring-teal-500" />
+            <button onClick={() => removeItem(item.id)} className="text-zinc-400 hover:text-rose-500 p-1"><Trash size={14} /></button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+});
