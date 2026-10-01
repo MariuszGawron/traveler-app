@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, MapPin, Calendar, Plane, Hotel, Clock, Users, UserRound, Baby, Settings, Crown, Car, FileText, Paperclip, Download, Trash2, Printer, Wallet, CheckSquare, Smile } from 'lucide-react';
+import { ChevronDown, ChevronUp, MapPin, Calendar, Plane, Hotel, Clock, Users, UserRound, Baby, Settings, Crown, Car, FileText, Paperclip, Download, Trash2, Printer, Wallet, CheckSquare, Smile, LogOut } from 'lucide-react';
 import { useTrips } from '../hooks/useTrips';
 import { useStore } from '../store/useStore';
 import ManageTripModal from './ManageTripModal';
@@ -17,7 +17,22 @@ export default function TripCard({ trip, refetchTrips }) {
   const [loading, setLoading] = useState(false);
   const [pdfGenerating, setPdfGenerating] = useState(false);
   const { fetchTripDetails, updateTrip } = useTrips();
-  const { mapSettings } = useStore();
+  const { mapSettings, user } = useStore();
+
+  const handleLeaveTrip = async (e) => {
+    e.stopPropagation();
+    if (!window.confirm(`Czy na pewno chcesz opuścić wyjazd "${trip.title}" i przestać go obserwować? Stracisz do niego dostęp.`)) return;
+    try {
+      const { data, error } = await supabase.from('trip_access').delete().eq('trip_id', trip.id).eq('user_id', user.id).select();
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error("Brak uprawnień do usunięcia własnego dostępu.");
+      }
+      if (refetchTrips) refetchTrips();
+    } catch (err) {
+      alert('Błąd podczas opuszczania wyjazdu: ' + err.message);
+    }
+  };
 
   const handleFileUpload = async (e, category, itemIdx) => {
     const file = e.target.files[0];
@@ -208,33 +223,33 @@ export default function TripCard({ trip, refetchTrips }) {
       <div className="mt-3 border-t border-zinc-100 dark:border-zinc-700/50 pt-3">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Załączniki</span>
-        <label className="cursor-pointer flex items-center text-xs text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 transition-colors bg-teal-50 dark:bg-teal-900/30 px-2 py-1 rounded">
-          <Paperclip size={14} className="mr-1" /> Załącz plik
-          <input type="file" className="hidden" accept="application/pdf,image/*" onChange={(e) => handleFileUpload(e, category, itemIdx)} />
-        </label>
-      </div>
-      {item.attachments && item.attachments.length > 0 ? (
-        <ul className="space-y-2">
-          {item.attachments.map((att, attIdx) => (
-            <li key={attIdx} className="flex items-center justify-between bg-zinc-50 dark:bg-zinc-800/50 p-2 rounded text-xs">
-              <span className="truncate flex-1 mr-2 text-zinc-600 dark:text-zinc-300">{att.name}</span>
-              <div className="flex items-center space-x-2">
-                <button onClick={(e) => { e.stopPropagation(); handleDownloadAttachment(att.path, att.name); }} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200" title="Pobierz">
-                  <Download size={14} />
-                </button>
-                {trip.role === 'admin' && (
-                  <button onClick={(e) => { e.stopPropagation(); handleDeleteAttachment(category, itemIdx, attIdx, att.path); }} className="text-rose-400 hover:text-rose-600" title="Usuń">
-                    <Trash2 size={14} />
+          <label className="cursor-pointer flex items-center text-xs text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 transition-colors bg-teal-50 dark:bg-teal-900/30 px-2 py-1 rounded">
+            <Paperclip size={14} className="mr-1" /> Załącz plik
+            <input type="file" className="hidden" accept="application/pdf,image/*" onChange={(e) => handleFileUpload(e, category, itemIdx)} />
+          </label>
+        </div>
+        {item.attachments && item.attachments.length > 0 ? (
+          <ul className="space-y-2">
+            {item.attachments.map((att, attIdx) => (
+              <li key={attIdx} className="flex items-center justify-between bg-zinc-50 dark:bg-zinc-800/50 p-2 rounded text-xs">
+                <span className="truncate flex-1 mr-2 text-zinc-600 dark:text-zinc-300">{att.name}</span>
+                <div className="flex items-center space-x-2">
+                  <button onClick={(e) => { e.stopPropagation(); handleDownloadAttachment(att.path, att.name); }} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200" title="Pobierz">
+                    <Download size={14} />
                   </button>
-                )}
-              </div>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <div className="text-xs text-zinc-400 dark:text-zinc-500 italic">Brak załączników</div>
-      )}
-    </div>
+                  {trip.role === 'admin' && (
+                    <button onClick={(e) => { e.stopPropagation(); handleDeleteAttachment(category, itemIdx, attIdx, att.path); }} className="text-rose-400 hover:text-rose-600" title="Usuń">
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="text-xs text-zinc-400 dark:text-zinc-500 italic">Brak załączników</div>
+        )}
+      </div>
     );
   };
 
@@ -274,6 +289,7 @@ export default function TripCard({ trip, refetchTrips }) {
   };
 
   const canSeeFull = trip.role === 'admin' || trip.role === 'full';
+  const isCreator = trip.creator_id === user?.id;
 
   const founderColors = [
     'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300',
@@ -282,7 +298,18 @@ export default function TripCard({ trip, refetchTrips }) {
     'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
     'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300',
     'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
-    'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+    'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+    'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300',
+    'bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-300',
+    'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300',
+    'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300',
+    'bg-lime-100 text-lime-700 dark:bg-lime-900/30 dark:text-lime-300',
+    'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
+    'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+    'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+    'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+    'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
+    'bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-300'
   ];
 
   const getFounderColorClass = (name) => {
@@ -392,6 +419,15 @@ export default function TripCard({ trip, refetchTrips }) {
               title="Zarządzaj wyjazdem"
             >
               <Settings size={20} />
+            </button>
+          )}
+          {!isCreator && (
+            <button
+              onClick={handleLeaveTrip}
+              className="p-2 bg-zinc-50 dark:bg-zinc-700/50 hover:bg-rose-50 dark:hover:bg-rose-900/30 text-zinc-400 dark:text-zinc-500 hover:text-rose-600 dark:hover:text-rose-400 rounded-full transition-colors"
+              title="Opuść wyjazd (przestań obserwować)"
+            >
+              <LogOut size={20} />
             </button>
           )}
           {(trip.role === 'admin' || trip.role === 'full' || trip.role === 'medium') && (
@@ -630,25 +666,25 @@ export default function TripCard({ trip, refetchTrips }) {
             {/* Harmonogram */}
             {canSeeFull && details.schedule?.length > 0 && (
               <div className="bg-white dark:bg-zinc-800 p-4 rounded-xl shadow-sm border border-zinc-100 dark:border-zinc-700 break-inside-avoid mb-4">
-              <div className="flex items-center font-semibold text-zinc-700 dark:text-zinc-200 mb-3">
-                <Clock size={18} className="mr-2 text-emerald-500 dark:text-emerald-400" />
-                Harmonogram dzienny
-              </div>
-              <div className="space-y-4">
-                {details.schedule.map((sched, idx) => (
-                  <div key={idx} className="flex text-sm">
-                    <div className="w-24 flex flex-col">
-                      <span className="font-semibold text-zinc-700 dark:text-zinc-300">{sched.day}</span>
-                      <span className="text-xs text-zinc-500 dark:text-zinc-500">{sched.time}</span>
+                <div className="flex items-center font-semibold text-zinc-700 dark:text-zinc-200 mb-3">
+                  <Clock size={18} className="mr-2 text-emerald-500 dark:text-emerald-400" />
+                  Harmonogram dzienny
+                </div>
+                <div className="space-y-4">
+                  {details.schedule.map((sched, idx) => (
+                    <div key={idx} className="flex text-sm">
+                      <div className="w-24 flex flex-col">
+                        <span className="font-semibold text-zinc-700 dark:text-zinc-300">{sched.day}</span>
+                        <span className="text-xs text-zinc-500 dark:text-zinc-500">{sched.time}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-zinc-800 dark:text-zinc-200 break-words">{sched.place}</div>
+                        {sched.info && <div className="text-zinc-500 dark:text-zinc-400 text-xs mt-0.5 break-words">{sched.info}</div>}
+                        {renderAttachments('schedule', sched, idx)}
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-zinc-800 dark:text-zinc-200 break-words">{sched.place}</div>
-                      {sched.info && <div className="text-zinc-500 dark:text-zinc-400 text-xs mt-0.5 break-words">{sched.info}</div>}
-                      {renderAttachments('schedule', sched, idx)}
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>

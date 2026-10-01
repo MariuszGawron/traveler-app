@@ -452,6 +452,78 @@ function SharingTab({ trip }) {
   const [searchResults, setSearchResults] = useState([]);
   const [suggestedUsers, setSuggestedUsers] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [groups, setGroups] = useState([]);
+  const [newGroupName, setNewGroupName] = useState('');
+  const [savingGroup, setSavingGroup] = useState(false);
+
+  useEffect(() => {
+    supabase.from('user_groups').select('*').eq('owner_id', user.id).then(({data}) => {
+      if (data) setGroups(data);
+    });
+  }, [user.id]);
+
+  const saveCurrentUsersAsGroup = async () => {
+    if (!newGroupName.trim()) return alert('Podaj nazwę grupy');
+    
+    let existingGroupId = null;
+    const existing = groups.find(g => g.name.toLowerCase() === newGroupName.trim().toLowerCase());
+    if (existing) {
+      if (!window.confirm('Grupa o takiej nazwie już istnieje. Czy chcesz ją nadpisać?')) return;
+      existingGroupId = existing.id;
+    }
+    
+    const memberIds = users.map(u => u.user_id).filter(id => id !== user.id);
+    if (memberIds.length === 0) return alert('Brak użytkowników do zapisania w grupie (Ty się nie liczysz).');
+    
+    setSavingGroup(true);
+    
+    if (existingGroupId) {
+      const { data: updatedGrp, error } = await supabase.from('user_groups').update({ member_ids: memberIds }).eq('id', existingGroupId).select().single();
+      setSavingGroup(false);
+      if (error) {
+        alert('Błąd nadpisywania grupy: ' + error.message);
+      } else {
+        setGroups(groups.map(g => g.id === existingGroupId ? updatedGrp : g));
+        setNewGroupName('');
+        alert('Grupa nadpisana pomyślnie!');
+      }
+    } else {
+      const { data: newGrp, error } = await supabase.from('user_groups').insert({
+        owner_id: user.id,
+        name: newGroupName.trim(),
+        member_ids: memberIds
+      }).select().single();
+      
+      setSavingGroup(false);
+      if (error) {
+        alert('Błąd zapisu grupy: ' + error.message);
+      } else {
+        setGroups([...groups, newGrp]);
+        setNewGroupName('');
+        alert('Grupa zapisana pomyślnie!');
+      }
+    }
+  };
+
+  const loadGroup = async (groupId) => {
+    const group = groups.find(g => g.id === groupId);
+    if (!group || !group.member_ids) return;
+    
+    let addedCount = 0;
+    for (const memberId of group.member_ids) {
+      if (!users.some(u => u.user_id === memberId)) {
+        await grantAccess(trip.id, memberId, 'medium'); // Default to medium
+        addedCount++;
+      }
+    }
+    
+    if (addedCount > 0) {
+      fetchAccessUsers(trip.id);
+      alert(`Dodano ${addedCount} nowych osób z grupy.`);
+    } else {
+      alert('Wszyscy członkowie z tej grupy mają już dostęp.');
+    }
+  };
 
   useEffect(() => {
     fetchAccessUsers(trip.id);
@@ -495,6 +567,28 @@ function SharingTab({ trip }) {
 
   return (
     <div className="space-y-6">
+      {/* Grupy */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-xl border border-zinc-100 dark:border-zinc-700">
+        <div>
+          <h4 className="font-medium text-sm text-zinc-800 dark:text-zinc-200 mb-1">Grupy udostępniania</h4>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">Zapisz obecnych użytkowników jako grupę lub przypisz z istniejącej.</p>
+        </div>
+        <div className="flex flex-col sm:items-end gap-2">
+          {groups.length > 0 && (
+            <select onChange={(e) => { if(e.target.value) { loadGroup(e.target.value); e.target.value = ''; } }} className="px-2 py-1.5 text-xs border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white rounded focus:outline-none focus:ring-1 focus:ring-teal-500 w-full sm:w-auto">
+              <option value="">-- Przypisz z grupy --</option>
+              {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+            </select>
+          )}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <input type="text" placeholder="Nazwa nowej grupy" value={newGroupName} onChange={e => setNewGroupName(e.target.value)} className="flex-1 sm:flex-none px-2 py-1.5 text-xs border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white rounded focus:outline-none focus:ring-1 focus:ring-teal-500" />
+            <button onClick={saveCurrentUsersAsGroup} disabled={savingGroup} className="px-3 py-1.5 bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-200 rounded text-xs font-medium transition-colors flex items-center">
+              {savingGroup ? <Loader2 size={12} className="animate-spin" /> : 'Zapisz obecnych'}
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Sugestie */}
       {availableSuggestions.length > 0 && (
         <div className="bg-teal-50/50 dark:bg-teal-900/20 p-3 rounded-xl border border-teal-100 dark:border-teal-900/50">
@@ -516,13 +610,13 @@ function SharingTab({ trip }) {
 
       {/* Wyszukiwarka */}
       <div className="relative">
-        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Zaproś osobę po adresie e-mail</label>
+        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Zaproś osobę po e-mailu lub Imieniu i Nazwisku</label>
         <div className="relative">
           <input
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Szukaj e-maila (min. 3 znaki)..."
+            placeholder="Wpisz e-mail (min. 3 znaki) lub Imię i Nazwisko..."
             className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 dark:text-white"
           />
           {isSearching && <Loader2 size={18} className="absolute right-3 top-3 animate-spin text-zinc-400" />}

@@ -1,6 +1,16 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
+export const obfuscateEmail = (email) => {
+  if (!email) return '';
+  const parts = email.split('@');
+  if (parts.length !== 2) return email;
+  const namePart = parts[0];
+  const domain = parts[1];
+  if (namePart.length <= 2) return `${namePart[0]}***@${domain}`;
+  return `${namePart[0]}${'*'.repeat(Math.max(1, namePart.length - 2))}${namePart[namePart.length - 1]}@${domain}`;
+};
+
 export function useAccess() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -29,10 +39,16 @@ export function useAccess() {
         .in('id', userIds);
         
       // Łączymy w pamięci
-      const merged = accessData.map(access => ({
-        ...access,
-        profiles: profilesData?.find(p => p.id === access.user_id) || null
-      }));
+      const merged = accessData.map(access => {
+        const p = profilesData?.find(p => p.id === access.user_id) || null;
+        if (p && p.email) {
+          p.email = obfuscateEmail(p.email);
+        }
+        return {
+          ...access,
+          profiles: p
+        };
+      });
       
       setUsers(merged);
       return merged;
@@ -47,13 +63,19 @@ export function useAccess() {
   const searchProfiles = async (query) => {
     if (!query || query.length < 3) return [];
     try {
-      // Wykorzystujemy bezpieczną funkcję RPC do wyszukiwania po e-mailu
-      // która wymaga DOKŁADNEGO dopasowania (niemożliwe do "zeskrapowania")
-      const { data, error } = await supabase
-        .rpc('search_user_by_email', { search_email: query });
-        
-      if (error) throw error;
-      return data || [];
+      if (query.includes('@')) {
+        const { data, error } = await supabase.rpc('search_user_by_email', { search_email: query.trim() });
+        if (error) throw error;
+        return (data || []).map(p => ({ ...p, email: obfuscateEmail(p.email) }));
+      } else {
+        const { data, error } = await supabase.rpc('search_user_by_name', { p_name: query.trim() });
+        if (error) throw error;
+        return (data || []).map(p => ({
+          id: p.id,
+          email: p.obfuscated_email || p.email, // handles both just in case
+          name: p.full_name || p.name
+        }));
+      }
     } catch (err) {
       console.error('Błąd wyszukiwania:', err.message);
       return [];
@@ -79,14 +101,13 @@ export function useAccess() {
       
       const uniqueUserIds = [...new Set(sharedAccess.map(a => a.user_id))];
       
-      // Pobierz ich profile
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, email, name')
         .in('id', uniqueUserIds)
         .limit(10);
         
-      return profiles || [];
+      return (profiles || []).map(p => ({ ...p, email: obfuscateEmail(p.email) }));
     } catch (err) {
       console.error('Błąd pobierania sugerowanych:', err.message);
       return [];
