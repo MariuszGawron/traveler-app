@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
-import { X, Loader2, Save, Trash, UserPlus, Shield, User, Users, ShieldAlert, Plus, Plane, Hotel, Clock, Map, Car, FileText, MapPin, Smile } from 'lucide-react';
+import { X, Loader2, Save, Trash, UserPlus, Shield, User, Users, ShieldAlert, Plus, Plane, Hotel, Clock, Map, Car, FileText, MapPin, Smile, Mail } from 'lucide-react';
 import { useTrips } from '../hooks/useTrips';
 import { useAccess } from '../hooks/useAccess';
 import { useStore } from '../store/useStore';
@@ -455,6 +455,8 @@ function SharingTab({ trip }) {
   const [groups, setGroups] = useState([]);
   const [newGroupName, setNewGroupName] = useState('');
   const [savingGroup, setSavingGroup] = useState(false);
+  const [inviting, setInviting] = useState(false);
+  const [inviteSuccess, setInviteSuccess] = useState(null);
 
   useEffect(() => {
     supabase.from('user_groups').select('*').eq('owner_id', user.id).then(({data}) => {
@@ -555,6 +557,34 @@ function SharingTab({ trip }) {
     setSuggestedUsers(prev => prev.filter(u => u.id !== userId)); // Remove from suggestions
   };
 
+  const handleInvite = async () => {
+    if (!searchQuery.includes('@')) {
+      return alert('Wpisz poprawny adres e-mail, aby wysłać zaproszenie.');
+    }
+    setInviting(true);
+    setInviteSuccess(null);
+    try {
+      // Wywołanie Edge Function, bo klient JS domyślnie nie ma uprawnień do wysyłania zaproszeń (potrzebuje service_role)
+      const { data, error } = await supabase.functions.invoke('invite_user', {
+        body: { email: searchQuery, trip_id: trip.id, role: 'medium' }
+      });
+      if (error) throw error;
+      
+      setInviteSuccess(`Wysłano zaproszenie na ${searchQuery}! Użytkownik otrzymał dostęp.`);
+      setSearchQuery('');
+      
+      // Odświeżamy listę po pomyślnym dodaniu
+      await fetchAccessUsers(trip.id);
+      
+      // Usuń komunikat sukcesu po 5 sekundach
+      setTimeout(() => setInviteSuccess(null), 5000);
+    } catch (err) {
+      alert('Błąd podczas wysyłania zaproszenia. Upewnij się, że funkcja Edge Function "invite_user" jest wdrożona na Supabase. Szczegóły: ' + err.message);
+    } finally {
+      setInviting(false);
+    }
+  };
+
   // Profile resolution helper (handles arrays or missing objects)
   const getProfileInfo = (u) => {
     if (!u.profiles) return { name: 'Użytkownik bez profilu', email: u.user_id };
@@ -638,6 +668,29 @@ function SharingTab({ trip }) {
                 </button>
               </div>
             ))}
+          </div>
+        )}
+
+        {inviteSuccess && (
+          <div className="mt-2 p-3 bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 rounded-lg text-sm border border-teal-100 dark:border-teal-900/50 flex items-center">
+            <Check size={16} className="mr-2 flex-shrink-0" />
+            <span>{inviteSuccess}</span>
+          </div>
+        )}
+
+        {searchQuery.includes('@') && !isSearching && searchResults.length === 0 && (
+          <div className="absolute z-10 mt-1 w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-lg p-4 text-center">
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-3">
+              Nie znaleziono użytkownika z e-mailem <strong>{searchQuery}</strong>.
+            </p>
+            <button
+              onClick={handleInvite}
+              disabled={inviting}
+              className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors inline-flex items-center disabled:opacity-70"
+            >
+              {inviting ? <Loader2 size={16} className="animate-spin mr-1.5" /> : <Mail size={16} className="mr-1.5" />}
+              Wyślij zaproszenie
+            </button>
           </div>
         )}
       </div>
