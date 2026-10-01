@@ -29,7 +29,7 @@ export default function SettingsModal({ onClose }) {
             <span className="w-8 h-8 rounded-full bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400 flex items-center justify-center mr-3">
               <Map size={18} />
             </span>
-            Osobne Ustawienia
+            Ustawienia
           </h2>
           <button onClick={onClose} className="p-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-500 dark:text-zinc-400 rounded-full transition-colors">
             <X size={20} />
@@ -39,7 +39,7 @@ export default function SettingsModal({ onClose }) {
         <div className="p-5 space-y-4">
           <div className="mb-6">
             <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">Wybierz, w jakich sekcjach mają ładować się mapy. Pozwoli to zoptymalizować działanie aplikacji przy większej liczbie zapisanych podróży.</p>
-            
+
             <div className="flex gap-2 mb-6">
               <button onClick={() => toggleAll(true)} className="flex-1 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-lg text-sm font-medium transition-colors">
                 Włącz wszystkie
@@ -50,35 +50,35 @@ export default function SettingsModal({ onClose }) {
             </div>
 
             <div className="space-y-1">
-              <ToggleRow 
-                icon={<Map size={18} className="text-teal-500" />} 
-                label="Mapa główna (nagłówek)" 
-                checked={mapSettings.main} 
-                onChange={() => toggleSetting('main')} 
+              <ToggleRow
+                icon={<Map size={18} className="text-teal-500" />}
+                label="Mapa główna (nagłówek)"
+                checked={mapSettings.main}
+                onChange={() => toggleSetting('main')}
               />
-              <ToggleRow 
-                icon={<Map size={18} className="text-sky-500" />} 
-                label="Transport" 
-                checked={mapSettings.transport} 
-                onChange={() => toggleSetting('transport')} 
+              <ToggleRow
+                icon={<Map size={18} className="text-sky-500" />}
+                label="Transport"
+                checked={mapSettings.transport}
+                onChange={() => toggleSetting('transport')}
               />
-              <ToggleRow 
-                icon={<Hotel size={18} className="text-amber-500" />} 
-                label="Zakwaterowanie" 
-                checked={mapSettings.accommodations} 
-                onChange={() => toggleSetting('accommodations')} 
+              <ToggleRow
+                icon={<Hotel size={18} className="text-amber-500" />}
+                label="Zakwaterowanie"
+                checked={mapSettings.accommodations}
+                onChange={() => toggleSetting('accommodations')}
               />
-              <ToggleRow 
-                icon={<Car size={18} className="text-purple-500" />} 
-                label="Wynajem aut" 
-                checked={mapSettings.carRentals} 
-                onChange={() => toggleSetting('carRentals')} 
+              <ToggleRow
+                icon={<Car size={18} className="text-purple-500" />}
+                label="Wynajem aut"
+                checked={mapSettings.carRentals}
+                onChange={() => toggleSetting('carRentals')}
               />
-              <ToggleRow 
-                icon={<MapPin size={18} className="text-slate-500" />} 
-                label="Parkingi" 
-                checked={mapSettings.parkings} 
-                onChange={() => toggleSetting('parkings')} 
+              <ToggleRow
+                icon={<MapPin size={18} className="text-slate-500" />}
+                label="Parkingi"
+                checked={mapSettings.parkings}
+                onChange={() => toggleSetting('parkings')}
               />
             </div>
           </div>
@@ -96,9 +96,9 @@ function ToggleRow({ icon, label, checked, onChange }) {
         <span className="font-medium text-zinc-700 dark:text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-white transition-colors">{label}</span>
       </div>
       <div className="relative flex items-center">
-        <input 
-          type="checkbox" 
-          className="sr-only" 
+        <input
+          type="checkbox"
+          className="sr-only"
           checked={checked}
           onChange={onChange}
         />
