@@ -537,7 +537,7 @@ function SharingTab({ trip }) {
       if (searchQuery.length >= 3) {
         setIsSearching(true);
         const results = await searchProfiles(searchQuery);
-        setSearchResults(results.filter(r => !users.some(u => u.user_id === r.id)));
+        setSearchResults(results);
         setIsSearching(false);
       } else {
         setSearchResults([]);
@@ -654,20 +654,27 @@ function SharingTab({ trip }) {
 
         {searchResults.length > 0 && (
           <div className="absolute z-10 mt-1 w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-lg overflow-hidden">
-            {searchResults.map(profile => (
-              <div key={profile.id} className="flex items-center justify-between p-3 hover:bg-zinc-50 dark:hover:bg-zinc-700/50 border-b border-zinc-100 dark:border-zinc-700 last:border-0">
-                <div>
-                  <div className="font-medium text-zinc-800 dark:text-zinc-200 text-sm">{profile.name || 'Nieznany'}</div>
-                  <div className="text-xs text-zinc-500 dark:text-zinc-400">{profile.email}</div>
+            {searchResults.map(profile => {
+              const isAlreadyAdded = users.some(u => u.user_id === profile.id);
+              return (
+                <div key={profile.id} className="flex items-center justify-between p-3 hover:bg-zinc-50 dark:hover:bg-zinc-700/50 border-b border-zinc-100 dark:border-zinc-700 last:border-0">
+                  <div>
+                    <div className="font-medium text-zinc-800 dark:text-zinc-200 text-sm">{profile.name || 'Nieznany'}</div>
+                    <div className="text-xs text-zinc-500 dark:text-zinc-400">{profile.email}</div>
+                  </div>
+                  {isAlreadyAdded ? (
+                    <span className="text-xs text-zinc-400 dark:text-zinc-500 font-medium px-2 py-1">Już dodany</span>
+                  ) : (
+                    <button
+                      onClick={() => handleGrant(profile.id)}
+                      className="p-1.5 text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/30 rounded-lg transition-colors flex items-center text-xs font-medium"
+                    >
+                      <UserPlus size={16} className="mr-1" /> Dodaj
+                    </button>
+                  )}
                 </div>
-                <button
-                  onClick={() => handleGrant(profile.id)}
-                  className="p-1.5 text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/30 rounded-lg transition-colors flex items-center text-xs font-medium"
-                >
-                  <UserPlus size={16} className="mr-1" /> Dodaj
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
