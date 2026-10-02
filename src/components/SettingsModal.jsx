@@ -19,6 +19,10 @@ export default function SettingsModal({ onClose }) {
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
 
+  const [newPassword, setNewPassword] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordMsg, setPasswordMsg] = useState('');
+
   useEffect(() => {
     if (activeTab === 'templates' && user) {
       setLoadingTpl(true);
@@ -128,6 +132,23 @@ export default function SettingsModal({ onClose }) {
     }
   };
 
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (newPassword.length < 6) {
+      return setPasswordMsg('Hasło musi mieć co najmniej 6 znaków.');
+    }
+    setIsChangingPassword(true);
+    setPasswordMsg('');
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setIsChangingPassword(false);
+    if (error) {
+      setPasswordMsg('Błąd: ' + error.message);
+    } else {
+      setPasswordMsg('Hasło zostało zmienione pomyślnie!');
+      setNewPassword('');
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm transition-all duration-200">
       <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden border border-zinc-100 dark:border-zinc-800 animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
@@ -158,6 +179,12 @@ export default function SettingsModal({ onClose }) {
             onClick={() => setActiveTab('groups')}
           >
             <Users size={16} className="mr-2" /> Grupy
+          </button>
+          <button
+            className={`py-3 px-4 font-medium text-sm border-b-2 transition-colors flex items-center ${activeTab === 'account' ? 'border-teal-600 text-teal-600 dark:border-teal-400 dark:text-teal-400' : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
+            onClick={() => setActiveTab('account')}
+          >
+            <User size={16} className="mr-2" /> Konto
           </button>
         </div>
 
@@ -208,6 +235,46 @@ export default function SettingsModal({ onClose }) {
                     onChange={() => toggleSetting('parkings')}
                   />
                 </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'account' && (
+            <div className="space-y-4">
+              <div className="mb-6">
+                <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
+                  Tutaj możesz zaktualizować swoje hasło dostępu do aplikacji. Zmiana hasła jest szczególnie przydatna, jeśli zarejestrowałeś się przez link z zaproszenia.
+                </p>
+                
+                <form onSubmit={handleChangePassword} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Nowe hasło</label>
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                      placeholder="Wpisz nowe hasło (min. 6 znaków)"
+                      required
+                      minLength={6}
+                    />
+                  </div>
+                  
+                  {passwordMsg && (
+                    <div className={`p-3 rounded-lg text-sm border ${passwordMsg.includes('Błąd') ? 'bg-rose-50 border-rose-100 text-rose-600 dark:bg-rose-900/30 dark:border-rose-900/50 dark:text-rose-400' : 'bg-teal-50 border-teal-100 text-teal-600 dark:bg-teal-900/30 dark:border-teal-900/50 dark:text-teal-400'}`}>
+                      {passwordMsg}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={isChangingPassword}
+                    className="w-full bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center transition-colors disabled:opacity-70"
+                  >
+                    {isChangingPassword ? <Loader2 size={16} className="animate-spin mr-1.5" /> : <Save size={16} className="mr-1.5" />}
+                    Zapisz nowe hasło
+                  </button>
+                </form>
               </div>
             </div>
           )}
