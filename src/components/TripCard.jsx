@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, MapPin, Calendar, Plane, Hotel, Clock, Users, UserRound, Baby, Settings, Crown, Car, FileText, Paperclip, Download, Trash2, Printer, Wallet, CheckSquare, Smile, LogOut } from 'lucide-react';
+import { ChevronDown, ChevronUp, MapPin, Calendar, Plane, Hotel, Clock, Users, UserRound, Baby, Settings, Crown, Car, FileText, Paperclip, Download, Trash2, Printer, Wallet, CheckSquare, Smile, LogOut, MoreVertical } from 'lucide-react';
 import { useTrips } from '../hooks/useTrips';
 import { useStore } from '../store/useStore';
 import ManageTripModal from './ManageTripModal';
@@ -7,6 +7,7 @@ import ExpensesModal from './ExpensesModal';
 import ChecklistModal from './ChecklistModal';
 import { supabase } from '../lib/supabaseClient';
 import { PDFDocument } from 'pdf-lib';
+import fontkit from '@pdf-lib/fontkit';
 
 export default function TripCard({ trip, refetchTrips }) {
   const [expanded, setExpanded] = useState(false);
@@ -16,6 +17,7 @@ export default function TripCard({ trip, refetchTrips }) {
   const [details, setDetails] = useState([]);
   const [loading, setLoading] = useState(false);
   const [pdfGenerating, setPdfGenerating] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { fetchTripDetails, updateTrip } = useTrips();
   const { mapSettings, user } = useStore();
 
@@ -92,7 +94,12 @@ export default function TripCard({ trip, refetchTrips }) {
       setPdfGenerating(true);
       const doc = await PDFDocument.create();
 
-      const removePL = (str) => str ? String(str).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ł/g, "l").replace(/Ł/g, "L") : "";
+      doc.registerFontkit(fontkit);
+      const fontUrl = 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/fonts/Roboto/Roboto-Regular.ttf';
+      const fontBytes = await fetch(fontUrl).then(res => res.arrayBuffer());
+      const customFont = await doc.embedFont(fontBytes);
+
+      const sanitizeText = (str) => str ? String(str).replace(/[^\x20-\x7E\xA0-\xFF\u0100-\u017F\u0180-\u024F]/g, "") : "";
 
       let page = doc.addPage();
       let cursorY = 800;
@@ -104,11 +111,38 @@ export default function TripCard({ trip, refetchTrips }) {
         }
       };
 
+      const splitTextIntoLines = (text, size, maxWidth, font) => {
+        const words = text.split(' ');
+        const lines = [];
+        let currentLine = '';
+
+        for (const word of words) {
+          const testLine = currentLine ? `${currentLine} ${word}` : word;
+          const width = font.widthOfTextAtSize(testLine, size);
+          if (width > maxWidth && currentLine !== '') {
+            lines.push(currentLine);
+            currentLine = word;
+          } else {
+            currentLine = testLine;
+          }
+        }
+        if (currentLine) {
+          lines.push(currentLine);
+        }
+        return lines;
+      };
+
       const drawText = (text, size) => {
         if (!text) return;
-        checkPage(size + 10);
-        page.drawText(removePL(text), { x: 50, y: cursorY, size });
-        cursorY -= (size + 15);
+        const sanitized = sanitizeText(text);
+        const lines = splitTextIntoLines(sanitized, size, 500, customFont);
+
+        for (const line of lines) {
+          checkPage(size + 10);
+          page.drawText(line, { x: 50, y: cursorY, size, font: customFont });
+          cursorY -= (size + 5);
+        }
+        cursorY -= 10;
       };
 
       let currentDetails = details;
@@ -167,37 +201,41 @@ export default function TripCard({ trip, refetchTrips }) {
 
       if (canSeeMedium) {
         await processSection("TRANSPORT", currentDetails.transports, (t) => {
-          drawText(`${t.type} z ${t.from} do ${t.to}`, 14);
+          drawText(`- ${t.type} z ${t.from} do ${t.to}`, 14);
           if (t.depDate || t.arrDate) drawText(`Wylot: ${t.depDate} ${t.depTime} | Przylot: ${t.arrDate} ${t.arrTime}`, 12);
+          if (t.bookingInfo) drawText(`Info: ${t.bookingInfo}`, 10);
         });
 
         await processSection("ZAKWATEROWANIE", currentDetails.accommodations, (a) => {
-          drawText(`${a.name}`, 14);
+          drawText(`- ${a.name}`, 14);
           drawText(`Adres: ${a.address}`, 12);
           if (a.dateFrom || a.dateTo) drawText(`Od: ${a.dateFrom} Do: ${a.dateTo}`, 12);
+          if (a.bookingInfo) drawText(`Info: ${a.bookingInfo}`, 10);
         });
 
         await processSection("UBEZPIECZENIA", currentDetails.insurances, (i) => {
-          drawText(`${i.company}`, 14);
+          drawText(`- ${i.company}`, 14);
           if (i.policyNumber) drawText(`Polisa: ${i.policyNumber}`, 12);
-          if (i.contactInfo) drawText(`Kontakt: ${i.contactInfo}`, 12);
+          if (i.contactInfo) drawText(`Kontakt: ${i.contactInfo}`, 10);
         });
       }
 
       if (canSeeFull) {
         await processSection("WYNAJEM AUTA", currentDetails.carRentals, (r) => {
-          drawText(`${r.company}`, 14);
+          drawText(`- ${r.company}`, 14);
           drawText(`Miejsce: ${r.location}`, 12);
           if (r.dateFrom || r.dateTo) drawText(`Od: ${r.dateFrom} Do: ${r.dateTo}`, 12);
+          if (r.bookingInfo) drawText(`Info: ${r.bookingInfo}`, 10);
         });
 
         await processSection("PARKINGI", currentDetails.parkings, (p) => {
-          drawText(`${p.location}`, 14);
+          drawText(`- ${p.location}`, 14);
           if (p.dateFrom || p.dateTo) drawText(`Od: ${p.dateFrom} Do: ${p.dateTo}`, 12);
+          if (p.bookingInfo) drawText(`Info: ${p.bookingInfo}`, 10);
         });
 
         await processSection("HARMONOGRAM", currentDetails.schedule, (s) => {
-          drawText(`${s.day} ${s.time} - ${s.place}`, 14);
+          drawText(`- ${s.day} ${s.time} - ${s.place}`, 14);
           if (s.info) drawText(`Info: ${s.info}`, 12);
         });
       }
@@ -332,10 +370,10 @@ export default function TripCard({ trip, refetchTrips }) {
   );
 
   return (
-    <div className="bg-white dark:bg-zinc-800 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-700 overflow-hidden transition-all hover:shadow-md">
+    <div className="bg-white dark:bg-zinc-800 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-700 transition-all hover:shadow-md relative">
       {/* Mapka jako cover nagłówka */}
       {mapSettings?.main && trip.destination && trip.role !== 'minimal' && (
-        <div className="w-full h-32 bg-zinc-100 dark:bg-zinc-800 relative pointer-events-none border-b border-zinc-100 dark:border-zinc-700">
+        <div className="w-full h-32 bg-zinc-100 dark:bg-zinc-800 relative pointer-events-none border-b border-zinc-100 dark:border-zinc-700 rounded-t-2xl overflow-hidden">
           <iframe
             width="100%"
             height="100%"
@@ -380,55 +418,78 @@ export default function TripCard({ trip, refetchTrips }) {
         </div>
 
         <div className="flex items-center space-x-1 sm:space-x-2">
-          {(trip.role === 'admin' || trip.role === 'full') && (
-            <>
+          {(trip.role !== 'minimal' && trip.role !== 'basic' || trip.role === 'admin' || !isCreator) && (
+            <div className="relative">
               <button
+                onClick={(e) => { e.stopPropagation(); setIsMenuOpen(!isMenuOpen); }}
                 className="p-2 bg-zinc-50 dark:bg-zinc-700/50 hover:bg-teal-50 dark:hover:bg-teal-900/30 text-zinc-400 dark:text-zinc-500 hover:text-teal-600 dark:hover:text-teal-400 rounded-full transition-colors"
-                title="Rozliczenia"
-                onClick={(e) => { e.stopPropagation(); setIsExpensesModalOpen(true); }}
+                title="Więcej opcji"
               >
-                <Wallet size={20} />
+                <MoreVertical size={20} />
               </button>
-              <button
-                className="p-2 bg-zinc-50 dark:bg-zinc-700/50 hover:bg-teal-50 dark:hover:bg-teal-900/30 text-zinc-400 dark:text-zinc-500 hover:text-teal-600 dark:hover:text-teal-400 rounded-full transition-colors"
-                title="Ekwipunek"
-                onClick={(e) => { e.stopPropagation(); setIsChecklistModalOpen(true); }}
-              >
-                <CheckSquare size={20} />
-              </button>
-            </>
-          )}
-          {(trip.role !== 'minimal' && trip.role !== 'basic') && (
-            <button
-              onClick={generateMasterPdf}
-              disabled={pdfGenerating}
-              className="p-2 bg-zinc-50 dark:bg-zinc-700/50 hover:bg-teal-50 dark:hover:bg-teal-900/30 text-zinc-400 dark:text-zinc-500 hover:text-teal-600 dark:hover:text-teal-400 rounded-full transition-colors"
-              title="Generuj Master PDF (Offline)"
-            >
-              {pdfGenerating ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-zinc-300 dark:border-zinc-600 border-t-teal-600 dark:border-t-teal-400"></div>
-              ) : (
-                <Printer size={20} />
+
+              {isMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setIsMenuOpen(false); }}></div>
+                  <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-zinc-800 rounded-xl shadow-lg border border-zinc-200 dark:border-zinc-700 py-1 z-50 overflow-hidden flex flex-col">
+
+                    {(trip.role === 'admin' || trip.role === 'full') && (
+                      <>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setIsMenuOpen(false); setIsExpensesModalOpen(true); }}
+                          className="flex items-center px-4 py-3 text-sm text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700/50 w-full text-left transition-colors"
+                        >
+                          <Wallet size={18} className="mr-3 text-emerald-500" />
+                          Rozliczenia
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setIsMenuOpen(false); setIsChecklistModalOpen(true); }}
+                          className="flex items-center px-4 py-3 text-sm text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700/50 w-full text-left transition-colors"
+                        >
+                          <CheckSquare size={18} className="mr-3 text-sky-500" />
+                          Ekwipunek
+                        </button>
+                        <div className="border-t border-zinc-100 dark:border-zinc-700 my-1"></div>
+                      </>
+                    )}
+
+                    {(trip.role !== 'minimal' && trip.role !== 'basic') && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setIsMenuOpen(false); generateMasterPdf(e); }}
+                        disabled={pdfGenerating}
+                        className="flex items-center px-4 py-3 text-sm text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700/50 w-full text-left transition-colors"
+                      >
+                        {pdfGenerating ? <div className="animate-spin rounded-full h-4 w-4 border-2 border-zinc-300 dark:border-zinc-600 border-t-teal-600 dark:border-t-teal-400 mr-3"></div> : <Printer size={18} className="mr-3 text-teal-500" />}
+                        Generuj PDF
+                      </button>
+                    )}
+
+                    {trip.role === 'admin' && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setIsMenuOpen(false); setIsManageModalOpen(true); }}
+                        className="flex items-center px-4 py-3 text-sm text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700/50 w-full text-left transition-colors"
+                      >
+                        <Settings size={18} className="mr-3 text-indigo-500" />
+                        Ustawienia wyjazdu
+                      </button>
+                    )}
+
+                    {!isCreator && (
+                      <>
+                        <div className="border-t border-zinc-100 dark:border-zinc-700 my-1"></div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setIsMenuOpen(false); handleLeaveTrip(e); }}
+                          className="flex items-center px-4 py-3 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/30 w-full text-left transition-colors"
+                        >
+                          <LogOut size={18} className="mr-3" />
+                          Opuść wyjazd (Zrezygnuj)
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </>
               )}
-            </button>
-          )}
-          {trip.role === 'admin' && (
-            <button
-              onClick={(e) => { e.stopPropagation(); setIsManageModalOpen(true); }}
-              className="p-2 bg-zinc-50 dark:bg-zinc-700/50 hover:bg-teal-50 dark:hover:bg-teal-900/30 text-zinc-400 dark:text-zinc-500 hover:text-teal-600 dark:hover:text-teal-400 rounded-full transition-colors"
-              title="Zarządzaj wyjazdem"
-            >
-              <Settings size={20} />
-            </button>
-          )}
-          {!isCreator && (
-            <button
-              onClick={handleLeaveTrip}
-              className="p-2 bg-zinc-50 dark:bg-zinc-700/50 hover:bg-rose-50 dark:hover:bg-rose-900/30 text-zinc-400 dark:text-zinc-500 hover:text-rose-600 dark:hover:text-rose-400 rounded-full transition-colors"
-              title="Opuść wyjazd (przestań obserwować)"
-            >
-              <LogOut size={20} />
-            </button>
+            </div>
           )}
           {(trip.role === 'admin' || trip.role === 'full' || trip.role === 'medium') && (
             <div className="bg-zinc-50 dark:bg-zinc-700/50 p-2 rounded-full text-zinc-400 dark:text-zinc-500">
@@ -446,7 +507,7 @@ export default function TripCard({ trip, refetchTrips }) {
 
       {/* Widok Logistyki (Dla uprawnionych, rozwija się jeśli są dane) */}
       {expanded && !loading && (
-        <div className="border-t border-zinc-100 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/50 p-5 space-y-6 animate-in slide-in-from-top-2 duration-200">
+        <div className="border-t border-zinc-100 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/50 p-5 space-y-6 animate-in slide-in-from-top-2 duration-200 rounded-b-2xl">
 
           {/* Ekipa wyjazdowa */}
           {details.participants?.length > 0 && (
@@ -485,45 +546,52 @@ export default function TripCard({ trip, refetchTrips }) {
                   <Plane size={18} className="mr-2 text-sky-500 dark:text-sky-400" />
                   Transport
                 </div>
-                {details.transports.map((trans, idx) => (
-                  <div key={idx} className="text-sm text-zinc-600 dark:text-zinc-400 mb-4 last:mb-0 border-b border-zinc-50 dark:border-zinc-700/50 pb-3 last:border-0 last:pb-0">
-                    <div className="font-semibold text-zinc-800 dark:text-zinc-200 capitalize mb-1">{trans.type} z {trans.from} do {trans.to}</div>
+                {[...details.transports].sort((a, b) => {
+                  const strA = `${a.depDate || '9999-12-31'} ${a.depTime || '00:00'}`;
+                  const strB = `${b.depDate || '9999-12-31'} ${b.depTime || '00:00'}`;
+                  return strA.localeCompare(strB);
+                }).map((trans) => {
+                  const originalIdx = details.transports.indexOf(trans);
+                  return (
+                    <div key={trans.id || originalIdx} className="text-sm text-zinc-600 dark:text-zinc-400 mb-4 last:mb-0 border-b border-zinc-50 dark:border-zinc-700/50 pb-3 last:border-0 last:pb-0">
+                      <div className="font-semibold text-zinc-800 dark:text-zinc-200 capitalize mb-1">{trans.type} z {trans.from} do {trans.to}</div>
 
-                    {(trans.depDate || trans.arrDate) && (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 bg-zinc-50 dark:bg-zinc-700/30 p-2 rounded text-xs">
-                        <div>
-                          <div className="font-medium text-zinc-500 dark:text-zinc-500">Wylot/Wyjazd</div>
-                          <div>{trans.depDate} {trans.depTime}</div>
+                      {(trans.depDate || trans.arrDate) && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 bg-zinc-50 dark:bg-zinc-700/30 p-2 rounded text-xs">
+                          <div>
+                            <div className="font-medium text-zinc-500 dark:text-zinc-500">Wylot/Wyjazd</div>
+                            <div>{trans.depDate} {trans.depTime}</div>
+                          </div>
+                          <div>
+                            <div className="font-medium text-zinc-500 dark:text-zinc-500">Przylot/Przyjazd</div>
+                            <div>{trans.arrDate} {trans.arrTime}</div>
+                          </div>
                         </div>
-                        <div>
-                          <div className="font-medium text-zinc-500 dark:text-zinc-500">Przylot/Przyjazd</div>
-                          <div>{trans.arrDate} {trans.arrTime}</div>
+                      )}
+                      {trans.bookingInfo && (
+                        <div className="mt-2 text-xs">
+                          <span className="bg-zinc-100 dark:bg-zinc-700 font-mono px-1.5 py-0.5 rounded border border-zinc-200 dark:border-zinc-600 break-all inline-block">{trans.bookingInfo}</span>
                         </div>
-                      </div>
-                    )}
-                    {trans.bookingInfo && (
-                      <div className="mt-2 text-xs">
-                        <span className="bg-zinc-100 dark:bg-zinc-700 font-mono px-1.5 py-0.5 rounded border border-zinc-200 dark:border-zinc-600 break-all inline-block">{trans.bookingInfo}</span>
-                      </div>
-                    )}
-                    {trans.from && trans.to && mapSettings?.transport && (
-                      <div className="mt-3 w-full h-32 bg-zinc-100 dark:bg-zinc-800 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700 relative">
-                        <iframe
-                          width="100%"
-                          height="100%"
-                          frameBorder="0"
-                          scrolling="no"
-                          marginHeight="0"
-                          marginWidth="0"
-                          src={`https://maps.google.com/maps?saddr=${encodeURIComponent(getMapLocation(trans.from, trans.type))}&daddr=${encodeURIComponent(getMapLocation(trans.to, trans.type))}&dirflg=${trans.type === 'auto' ? 'd' : (trans.type === 'autobus' || trans.type === 'pociąg') ? 'r' : ''}&output=embed`}
-                          title={`Trasa z ${trans.from} do ${trans.to}`}
-                          className="dark:opacity-80 filter dark:brightness-75 dark:contrast-125"
-                        ></iframe>
-                      </div>
-                    )}
-                    {renderAttachments('transports', trans, idx)}
-                  </div>
-                ))}
+                      )}
+                      {trans.from && trans.to && mapSettings?.transport && (
+                        <div className="mt-3 w-full h-32 bg-zinc-100 dark:bg-zinc-800 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700 relative">
+                          <iframe
+                            width="100%"
+                            height="100%"
+                            frameBorder="0"
+                            scrolling="no"
+                            marginHeight="0"
+                            marginWidth="0"
+                            src={`https://maps.google.com/maps?saddr=${encodeURIComponent(getMapLocation(trans.from, trans.type))}&daddr=${encodeURIComponent(getMapLocation(trans.to, trans.type))}&dirflg=${trans.type === 'auto' ? 'd' : (trans.type === 'autobus' || trans.type === 'pociąg') ? 'r' : ''}&output=embed`}
+                            title={`Trasa z ${trans.from} do ${trans.to}`}
+                            className="dark:opacity-80 filter dark:brightness-75 dark:contrast-125"
+                          ></iframe>
+                        </div>
+                      )}
+                      {renderAttachments('transports', trans, originalIdx)}
+                    </div>
+                  )
+                })}
               </div>
             )}
 

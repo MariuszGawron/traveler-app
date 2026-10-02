@@ -47,12 +47,12 @@ export default function Dashboard() {
           </div>
 
           <nav className="flex items-center space-x-1 w-full lg:w-auto order-3 lg:order-2 justify-start sm:justify-center border-t lg:border-t-0 border-zinc-100 dark:border-zinc-800 pt-2 lg:pt-0 mt-1 lg:mt-0">
-            <button 
+            <button
               onClick={() => setCurrentView('trips')}
               className={`px-4 py-2 text-sm font-medium rounded-lg flex items-center transition-colors ${currentView === 'trips' ? 'text-teal-700 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/30' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800'}`}>
               <Map size={16} className="mr-1.5" /> Moje Wyjazdy
             </button>
-            <button 
+            <button
               onClick={() => setCurrentView('calendar')}
               className={`px-4 py-2 text-sm font-medium rounded-lg flex items-center transition-colors ${currentView === 'calendar' ? 'text-teal-700 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/30' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800'}`}>
               <Calendar size={16} className="mr-1.5" /> Kalendarz
@@ -62,7 +62,7 @@ export default function Dashboard() {
           <div className="flex items-center space-x-0.5 sm:space-x-2 order-2 lg:order-3">
             <div className="flex items-center space-x-2 mr-1 sm:mr-3 px-2 sm:px-3 py-1 sm:border-r border-zinc-200 dark:border-zinc-700">
               <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 inline-block">Tylko moje</span>
-              <button 
+              <button
                 onClick={() => setShowOnlyMine(!showOnlyMine)}
                 className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors ${showOnlyMine ? 'bg-teal-500' : 'bg-zinc-300 dark:bg-zinc-700'}`}
                 title="Pokaż tylko wyjazdy, których jestem autorem"
@@ -70,7 +70,7 @@ export default function Dashboard() {
                 <span className={`pointer-events-none inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ease-in-out ${showOnlyMine ? 'translate-x-2' : '-translate-x-2'}`} />
               </button>
             </div>
-            
+
             <span className="text-sm font-medium text-zinc-600 dark:text-zinc-300 hidden sm:inline-block px-3 py-1 bg-zinc-100 dark:bg-zinc-800 rounded-full mr-2">
               {user?.email}
             </span>
@@ -89,21 +89,21 @@ export default function Dashboard() {
                   <div className="fixed inset-0 z-40" onClick={() => setIsMenuOpen(false)}></div>
                   <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-zinc-800 rounded-xl shadow-lg border border-zinc-200 dark:border-zinc-700 py-1 z-50 overflow-hidden flex flex-col">
                     <button className="flex items-center px-4 py-3 text-sm text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700/50 w-full text-left" onClick={() => { toggleTheme(); setIsMenuOpen(false); }}>
-                        {isDarkMode ? <Sun size={18} className="mr-3 text-amber-500" /> : <Moon size={18} className="mr-3 text-amber-500" />}
-                        Przełącz motyw
+                      {isDarkMode ? <Sun size={18} className="mr-3 text-amber-500" /> : <Moon size={18} className="mr-3 text-amber-500" />}
+                      Przełącz motyw
                     </button>
                     <button className="flex items-center px-4 py-3 text-sm text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700/50 w-full text-left" onClick={() => { setIsSettingsModalOpen(true); setIsMenuOpen(false); }}>
-                        <Settings size={18} className="mr-3 text-teal-500" />
-                        Ustawienia
+                      <Settings size={18} className="mr-3 text-teal-500" />
+                      Ustawienia
                     </button>
                     <button className="flex items-center px-4 py-3 text-sm text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700/50 w-full text-left" onClick={() => { setIsProfileModalOpen(true); setIsMenuOpen(false); }}>
-                        <UserCircle size={18} className="mr-3 text-indigo-500" />
-                        Mój Profil
+                      <UserCircle size={18} className="mr-3 text-indigo-500" />
+                      Mój Profil
                     </button>
                     <div className="border-t border-zinc-100 dark:border-zinc-700 my-1"></div>
                     <button className="flex items-center px-4 py-3 text-sm text-rose-600 dark:text-rose-400 hover:bg-zinc-100 dark:hover:bg-zinc-700/50 w-full text-left" onClick={() => { signOut(); setIsMenuOpen(false); }}>
-                        <LogOut size={18} className="mr-3" />
-                        Wyloguj
+                      <LogOut size={18} className="mr-3" />
+                      Wyloguj
                     </button>
                   </div>
                 </>
