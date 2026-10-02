@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
-import { X, Loader2, Save, Trash, UserPlus, Shield, User, Users, ShieldAlert, Plus, Plane, Hotel, Clock, Map, Car, FileText, MapPin, Smile, Mail } from 'lucide-react';
+import { X, Loader2, Save, Trash, UserPlus, Shield, User, Users, ShieldAlert, Plus, Plane, Hotel, Clock, Map, Car, FileText, MapPin, Smile, Mail, Check } from 'lucide-react';
 import { useTrips } from '../hooks/useTrips';
 import { useAccess } from '../hooks/useAccess';
 import { useStore } from '../store/useStore';
