@@ -7,9 +7,9 @@ export const useStore = create((set) => ({
   mapSettings: (() => {
     try {
       const stored = localStorage.getItem('traveler_mapSettings');
-      return stored ? JSON.parse(stored) : { main: false, transport: false, accommodations: false, carRentals: false, parkings: false };
+      return stored ? JSON.parse(stored) : { main: true, transport: true, accommodations: false, carRentals: false, parkings: false };
     } catch {
-      return { main: false, transport: false, accommodations: false, carRentals: false, parkings: false };
+      return { main: true, transport: true, accommodations: false, carRentals: false, parkings: false };
     }
   })(),
   setMapSettings: (settings) => {
