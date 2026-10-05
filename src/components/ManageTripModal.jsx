@@ -36,7 +36,7 @@ export default function ManageTripModal({ trip, onClose, refetchTrips }) {
   return (
     <div className="fixed inset-0 bg-zinc-900/50 dark:bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
       <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden border border-transparent dark:border-zinc-800">
-        <div className="flex items-center justify-between p-5 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50">
+        <div className="flex items-center justify-between p-5 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 flex-shrink-0">
           <div>
             <h2 className="text-xl font-bold text-zinc-800 dark:text-white">Zarządzanie: {trip.title}</h2>
           </div>
@@ -45,30 +45,24 @@ export default function ManageTripModal({ trip, onClose, refetchTrips }) {
           </button>
         </div>
 
-        <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 px-5 bg-white dark:bg-zinc-900">
-          <div className="flex">
-            <button
-              className={`py-3 px-4 font-medium text-sm border-b-2 transition-colors ${activeTab === 'general' ? 'border-teal-600 text-teal-600 dark:border-teal-400 dark:text-teal-400' : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
-              onClick={() => setActiveTab('general')}
-            >
-              Ogólne
-            </button>
-            <button
-              className={`py-3 px-4 font-medium text-sm border-b-2 transition-colors ${activeTab === 'logistics' ? 'border-teal-600 text-teal-600 dark:border-teal-400 dark:text-teal-400' : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
-              onClick={() => setActiveTab('logistics')}
-            >
-              Plan Wyjazdu
-            </button>
-            <button
-              className={`py-3 px-4 font-medium text-sm border-b-2 transition-colors ${activeTab === 'sharing' ? 'border-teal-600 text-teal-600 dark:border-teal-400 dark:text-teal-400' : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
-              onClick={() => setActiveTab('sharing')}
-            >
-              Udostępnianie
-            </button>
-          </div>
-          <button onClick={handleGlobalSave} disabled={isSaving} className="flex items-center bg-teal-600 hover:bg-teal-700 text-white px-4 py-1.5 rounded-lg transition-colors text-sm font-medium shadow-sm mb-1 mt-1">
-            {isSaving ? <Loader2 size={16} className="animate-spin mr-1.5" /> : <Save size={16} className="mr-1.5" />}
-            Zapisz zmiany
+        <div className="flex w-full border-b border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex-shrink-0">
+          <button
+            className={`flex-1 py-3 px-1 sm:px-4 font-medium text-[12px] sm:text-sm text-center border-b-2 transition-colors ${activeTab === 'general' ? 'border-teal-600 text-teal-600 dark:border-teal-400 dark:text-teal-400' : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
+            onClick={() => setActiveTab('general')}
+          >
+            Ogólne
+          </button>
+          <button
+            className={`flex-1 py-3 px-1 sm:px-4 font-medium text-[12px] sm:text-sm text-center border-b-2 transition-colors ${activeTab === 'logistics' ? 'border-teal-600 text-teal-600 dark:border-teal-400 dark:text-teal-400' : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
+            onClick={() => setActiveTab('logistics')}
+          >
+            Plan Wyjazdu
+          </button>
+          <button
+            className={`flex-1 py-3 px-1 sm:px-4 font-medium text-[12px] sm:text-sm text-center border-b-2 transition-colors ${activeTab === 'sharing' ? 'border-teal-600 text-teal-600 dark:border-teal-400 dark:text-teal-400' : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'}`}
+            onClick={() => setActiveTab('sharing')}
+          >
+            Udostępnianie
           </button>
         </div>
 
@@ -82,6 +76,13 @@ export default function ManageTripModal({ trip, onClose, refetchTrips }) {
           <div className={activeTab === 'sharing' ? 'block' : 'hidden'}>
             <SharingTab trip={trip} />
           </div>
+        </div>
+
+        <div className="p-4 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 flex justify-end">
+          <button onClick={handleGlobalSave} disabled={isSaving} className="w-full sm:w-auto flex items-center justify-center bg-teal-600 hover:bg-teal-700 text-white px-6 py-2.5 rounded-xl transition-colors font-medium shadow-sm">
+            {isSaving ? <Loader2 size={18} className="animate-spin mr-2" /> : <Save size={18} className="mr-2" />}
+            Zapisz zmiany
+          </button>
         </div>
       </div>
     </div>
@@ -714,25 +715,25 @@ function SharingTab({ trip }) {
             {users.map(u => {
               const profileInfo = getProfileInfo(u);
               return (
-                <div key={u.user_id} className="flex items-center justify-between p-3 bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 rounded-xl shadow-sm">
-                  <div className="flex items-center space-x-3">
-                    <div className={`p-2 rounded-full ${u.access_level === 'admin' ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400' : u.access_level === 'full' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400' : u.access_level === 'basic' ? 'bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400' : 'bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400'}`}>
+                <div key={u.user_id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-white dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 rounded-xl shadow-sm gap-3">
+                  <div className="flex items-center space-x-3 min-w-0">
+                    <div className={`p-2 rounded-full flex-shrink-0 ${u.access_level === 'admin' ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400' : u.access_level === 'full' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400' : u.access_level === 'basic' ? 'bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400' : 'bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400'}`}>
                       {u.access_level === 'admin' ? <ShieldAlert size={16} /> : u.access_level === 'full' ? <Shield size={16} /> : <User size={16} />}
                     </div>
-                    <div>
-                      <div className="font-medium text-zinc-800 dark:text-zinc-200 text-sm">{profileInfo.name}</div>
-                      <div className="text-xs text-zinc-500 dark:text-zinc-400">{profileInfo.email}</div>
+                    <div className="min-w-0">
+                      <div className="font-medium text-zinc-800 dark:text-zinc-200 text-sm truncate">{profileInfo.name}</div>
+                      <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate">{profileInfo.email}</div>
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center justify-end space-x-2 flex-shrink-0 w-full sm:w-auto">
                     <select
                       value={u.access_level}
                       onChange={async (e) => {
                         const res = await updateAccess(trip.id, u.user_id, e.target.value);
                         if (!res.success) alert('Błąd aktualizacji: ' + res.error + '\nByć może masz ustawiony constraint (ograniczenie) na kolumnie w bazie.');
                       }}
-                      className="text-xs border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-1.5 bg-zinc-50 dark:bg-zinc-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-teal-500"
+                      className="flex-1 sm:flex-none text-xs border border-zinc-200 dark:border-zinc-700 rounded-lg px-2 py-1.5 bg-zinc-50 dark:bg-zinc-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-teal-500 truncate"
                       disabled={u.user_id === user.id} // You shouldn't demote yourself if you are the only admin
                     >
                       <option value="admin">Twórca (Edycja)</option>
@@ -747,7 +748,7 @@ function SharingTab({ trip }) {
                           const res = await revokeAccess(trip.id, u.user_id);
                           if (!res.success) alert('Błąd usuwania dostępu: ' + res.error);
                         }}
-                        className="p-1.5 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-lg transition-colors"
+                        className="p-1.5 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-lg transition-colors flex-shrink-0"
                         title="Usuń dostęp"
                       >
                         <X size={16} />

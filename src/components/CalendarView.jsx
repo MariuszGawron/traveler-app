@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const colors = [
@@ -38,8 +38,46 @@ export default function CalendarView({ trips }) {
 
   const monthName = currentDate.toLocaleString('pl-PL', { month: 'long', year: 'numeric' });
 
-  // Filter trips that overlap with current month
-  // Create a helper to check if trip spans a given day
+  // Filter and assign lanes
+  const tripLanes = useMemo(() => {
+    const lanes = [];
+    const mapping = {};
+
+    // Sort all trips chronologically
+    const sortedTrips = [...trips].sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
+
+    for (const trip of sortedTrips) {
+      let laneFound = false;
+      const tripStart = new Date(trip.start_date);
+      tripStart.setHours(0, 0, 0, 0);
+      const tripEnd = new Date(trip.end_date);
+      tripEnd.setHours(23, 59, 59, 999);
+
+      for (let i = 0; i < lanes.length; i++) {
+        // check overlap
+        const overlap = lanes[i].some(existingTrip => {
+          const eStart = new Date(existingTrip.start_date);
+          eStart.setHours(0, 0, 0, 0);
+          const eEnd = new Date(existingTrip.end_date);
+          eEnd.setHours(23, 59, 59, 999);
+          return tripStart <= eEnd && tripEnd >= eStart;
+        });
+
+        if (!overlap) {
+          lanes[i].push(trip);
+          mapping[trip.id] = i;
+          laneFound = true;
+          break;
+        }
+      }
+      if (!laneFound) {
+        lanes.push([trip]);
+        mapping[trip.id] = lanes.length - 1;
+      }
+    }
+    return mapping;
+  }, [trips]);
+
   const isTripInDay = (trip, day) => {
     const currentDay = new Date(year, month, day);
     currentDay.setHours(0, 0, 0, 0);
@@ -54,32 +92,104 @@ export default function CalendarView({ trips }) {
 
   const days = [];
   for (let i = 0; i < startOffset; i++) {
-    days.push(<div key={`empty-${i}`} className="h-24 sm:h-32 border border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30"></div>);
+    days.push(<div key={`empty-${i}`} className="min-h-[6rem] sm:min-h-[8rem] border border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30"></div>);
   }
 
   for (let d = 1; d <= daysInMonth; d++) {
-    const dayTrips = trips.filter(trip => isTripInDay(trip, d));
+    const activeTrips = trips.filter(trip => isTripInDay(trip, d));
+
+    // Find max lane for this day to know how many slots we need to render
+    let maxLane = -1;
+    activeTrips.forEach(t => {
+      if (tripLanes[t.id] > maxLane) maxLane = tripLanes[t.id];
+    });
+
+    const daySlots = [];
+    for (let lane = 0; lane <= maxLane; lane++) {
+      const trip = activeTrips.find(t => tripLanes[t.id] === lane);
+      if (!trip) {
+        daySlots.push(<div key={`empty-lane-${lane}`} className="h-5 sm:h-6 mb-1"></div>);
+        continue;
+      }
+
+      const isMinimal = trip.role === 'minimal';
+      const displayTitle = isMinimal ? 'Wyjazd ukryty' : trip.title;
+      const tooltipTitle = `${displayTitle}\nUtworzył/a: ${trip.founderName || 'Nieznany'}\nOd: ${trip.start_date}\nDo: ${trip.end_date}`;
+      const colorClass = getColorClass(trip.founderName);
+
+      const currentDayDate = new Date(year, month, d);
+      currentDayDate.setHours(0, 0, 0, 0);
+
+      const start = new Date(trip.start_date);
+      start.setHours(0, 0, 0, 0);
+
+      const end = new Date(trip.end_date);
+      end.setHours(23, 59, 59, 999);
+
+      const dayOfWeek = (startOffset + d - 1) % 7; // 0 = Mon, 6 = Sun
+
+      const isFirstDayOfTrip = currentDayDate.getTime() === start.getTime();
+      const isLastDayOfTrip = currentDayDate.getTime() === new Date(end.getFullYear(), end.getMonth(), end.getDate()).getTime();
+
+      const isStartOfStrip = isFirstDayOfTrip || dayOfWeek === 0;
+      const isEndOfStrip = isLastDayOfTrip || dayOfWeek === 6;
+
+      let rounding = 'rounded-none';
+      let borderStyle = 'border-y border-transparent'; // invisible borders for continuous strip to maintain height
+
+      if (isStartOfStrip && isEndOfStrip) {
+        rounding = 'rounded-md mx-1 sm:mx-2';
+        borderStyle = 'border';
+      } else if (isStartOfStrip) {
+        rounding = 'rounded-l-md ml-1 sm:ml-2';
+        borderStyle = 'border-y border-l border-r-0';
+      } else if (isEndOfStrip) {
+        rounding = 'rounded-r-md mr-1 sm:mr-2';
+        borderStyle = 'border-y border-r border-l-0';
+      } else {
+        borderStyle = 'border-y border-x-0';
+      }
+
+      // Calculate how many days this strip spans in the current week to set the text width
+      const daysLeftInWeek = 7 - dayOfWeek;
+      const currentMonthEnd = new Date(year, month, daysInMonth, 23, 59, 59, 999);
+      const effectiveTripEnd = new Date(Math.min(end.getTime(), currentMonthEnd.getTime()));
+      // Use Math.floor to avoid 47.99 hours rounding up to 2 + 1 = 3 days instead of 2.
+      const daysLeftInTripForMonth = Math.floor((effectiveTripEnd.getTime() - currentDayDate.getTime()) / (24 * 60 * 60 * 1000)) + 1;
+      const spanDays = Math.min(daysLeftInWeek, daysLeftInTripForMonth);
+
+      // Determine precise width adjustment to prevent text from spilling over rounded corners
+      // If it ends on this week, we pull the width back slightly to match the right margin
+      const endsInThisWeek = daysLeftInTripForMonth <= daysLeftInWeek;
+      const widthAdjustment = endsInThisWeek ? ' - 0.25rem' : '';
+
+      daySlots.push(
+        <div
+          key={trip.id}
+          className={`${colorClass} text-[10px] sm:text-xs py-0.5 sm:py-1 ${rounding} ${borderStyle} font-medium h-5 sm:h-6 mb-1 flex items-center shadow-sm z-10 relative`}
+          title={tooltipTitle}
+        >
+          {isStartOfStrip && (
+            <div 
+              className="absolute left-0 top-0 bottom-0 flex items-center z-20 pointer-events-none overflow-hidden min-w-0" 
+              style={{ width: `calc(${spanDays * 100}% + ${spanDays - 1}px${widthAdjustment})` }}
+            >
+              <span className="px-1.5 truncate w-full pointer-events-auto" title={tooltipTitle}>{displayTitle}</span>
+            </div>
+          )}
+        </div>
+      );
+    }
 
     days.push(
-      <div key={d} className="h-24 sm:h-32 border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-800 p-1 sm:p-2 overflow-hidden flex flex-col transition-colors">
-        <span className="text-xs sm:text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">{d}</span>
-        <div className="flex-1 overflow-y-auto space-y-1">
-          {dayTrips.map(trip => {
-            const isMinimal = trip.role === 'minimal';
-            const displayTitle = isMinimal ? 'Wyjazd ukryty' : trip.title;
-            const tooltipTitle = `${displayTitle} (Utworzył/a: ${trip.founderName || 'Nieznany'})`;
-            const colorClass = getColorClass(trip.founderName);
-
-            return (
-              <div
-                key={trip.id}
-                className={`${colorClass} text-[10px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded truncate font-medium border`}
-                title={tooltipTitle}
-              >
-                {displayTitle}
-              </div>
-            );
-          })}
+      <div 
+        key={d} 
+        className="min-h-[6rem] sm:min-h-[8rem] border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-800 py-1 sm:py-2 flex flex-col transition-colors relative"
+        style={{ zIndex: 40 - d }}
+      >
+        <span className="px-1 sm:px-2 text-xs sm:text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">{d}</span>
+        <div className="flex-1 flex flex-col">
+          {daySlots}
         </div>
       </div>
     );
