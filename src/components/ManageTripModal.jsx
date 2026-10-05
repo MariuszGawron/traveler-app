@@ -566,8 +566,25 @@ function SharingTab({ trip }) {
     setInviteSuccess(null);
     try {
       // Wywołanie Edge Function, bo klient JS domyślnie nie ma uprawnień do wysyłania zaproszeń (potrzebuje service_role)
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Pobieramy imię z tabeli profiles (jako główne źródło prawdy)
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('name')
+        .eq('id', user.id)
+        .single();
+        
+      const inviterName = profile?.name || user?.user_metadata?.name || user?.email || 'Ktoś';
+      
       const { data, error } = await supabase.functions.invoke('invite_user', {
-        body: { email: searchQuery, trip_id: trip.id, role: 'medium' }
+        body: { 
+          email: searchQuery, 
+          trip_id: trip.id, 
+          role: 'medium',
+          inviter_name: inviterName,
+          trip_title: trip.title
+        }
       });
       if (error) throw error;
       
