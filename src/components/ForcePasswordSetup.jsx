@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { Loader2, ShieldCheck } from 'lucide-react';
 
-export default function ForcePasswordSetup({ onComplete }) {
+import { X } from 'lucide-react';
+
+export default function ForcePasswordSetup({ onComplete, onCancel }) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -29,8 +31,14 @@ export default function ForcePasswordSetup({ onComplete }) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white dark:bg-zinc-900 rounded-2xl shadow-xl overflow-hidden border border-zinc-200 dark:border-zinc-800">
+    <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white dark:bg-zinc-900 rounded-2xl shadow-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 relative">
+        <button 
+          onClick={onCancel}
+          className="absolute top-4 right-4 p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+        >
+          <X size={20} />
+        </button>
         <div className="p-8">
           <div className="flex justify-center mb-6">
             <div className="bg-teal-600 p-3 rounded-full text-white">

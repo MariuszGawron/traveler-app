@@ -38,6 +38,16 @@ function App() {
     return () => subscription.unsubscribe();
   }, [setSession]);
 
+  const [showPasswordSetup, setShowPasswordSetup] = useState(() => localStorage.getItem('mustSetPassword') === 'true');
+
+  useEffect(() => {
+    // Sync state if it changes
+    if (mustSetPassword && !localStorage.getItem('mustSetPassword')) {
+      setMustSetPassword(false);
+      setShowPasswordSetup(false);
+    }
+  }, [mustSetPassword]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 flex items-center justify-center transition-colors">
@@ -46,18 +56,29 @@ function App() {
     );
   }
 
-  if (session && mustSetPassword) {
-    return (
-      <ForcePasswordSetup 
-        onComplete={() => {
-          localStorage.removeItem('mustSetPassword');
-          setMustSetPassword(false);
-        }} 
-      />
-    );
-  }
-
-  return session ? <Dashboard /> : <Auth />;
+  return (
+    <>
+      {session ? (
+        <Dashboard 
+          mustSetPassword={mustSetPassword} 
+          onOpenPasswordSetup={() => setShowPasswordSetup(true)} 
+        />
+      ) : (
+        <Auth />
+      )}
+      
+      {session && showPasswordSetup && (
+        <ForcePasswordSetup 
+          onComplete={() => {
+            localStorage.removeItem('mustSetPassword');
+            setMustSetPassword(false);
+            setShowPasswordSetup(false);
+          }} 
+          onCancel={() => setShowPasswordSetup(false)}
+        />
+      )}
+    </>
+  );
 }
 
 export default App;

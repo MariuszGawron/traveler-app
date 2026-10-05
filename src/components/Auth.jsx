@@ -12,6 +12,27 @@ export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const [name, setName] = useState('');
 
+  const handleResetPassword = async () => {
+    if (!email) {
+      setError('Wpisz swój adres e-mail powyżej, aby zresetować hasło.');
+      return;
+    }
+    try {
+      setLoading(true);
+      setError(null);
+      setSuccessMsg(null);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin,
+      });
+      if (error) throw error;
+      setSuccessMsg('Na twój adres e-mail wysłano link do resetu hasła.');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -97,7 +118,18 @@ export default function Auth() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-zinc-300 mb-1.5">Hasło</label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-sm font-medium text-slate-700 dark:text-zinc-300">Hasło</label>
+                {isLogin && (
+                  <button 
+                    type="button"
+                    onClick={handleResetPassword}
+                    className="text-xs font-medium text-blue-600 dark:text-teal-400 hover:underline focus:outline-none"
+                  >
+                    Zapomniałeś hasła?
+                  </button>
+                )}
+              </div>
               <input
                 type="password"
                 value={password}

@@ -9,7 +9,7 @@ import ProfileModal from './ProfileModal';
 import SettingsModal from './SettingsModal';
 import packageJson from '../../package.json';
 
-export default function Dashboard() {
+export default function Dashboard({ mustSetPassword, onOpenPasswordSetup }) {
   const { trips, loading, error, createTrip, refetchTrips } = useTrips();
   const { user, signOut } = useStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -35,7 +35,18 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen font-sans transition-colors duration-200">
+    <div className="min-h-screen font-sans transition-colors duration-200 relative">
+      {mustSetPassword && (
+        <div className="bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 px-4 py-3 text-sm flex items-center justify-center text-center">
+          <span>
+            Twoje konto nie ma jeszcze ustawionego hasła.{' '}
+            <button onClick={onOpenPasswordSetup} className="font-semibold underline hover:text-amber-900 dark:hover:text-amber-100 transition-colors">
+              Ustaw hasło teraz
+            </button>
+            , aby uniknąć problemów z logowaniem w przyszłości.
+          </span>
+        </div>
+      )}
       <header className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 sticky top-0 z-10 transition-colors duration-200">
         <div className="max-w-5xl mx-auto px-4 py-2 flex flex-wrap items-center justify-between gap-y-2 lg:h-16">
           <div className="flex items-center space-x-2 text-teal-600 dark:text-teal-500 w-auto">
