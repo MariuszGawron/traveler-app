@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Loader2, LogOut, Compass, Plus, Map, UserCircle, Sun, Moon, Settings, Calendar, MoreVertical } from 'lucide-react';
+import { Loader2, LogOut, Compass, Plus, Map, UserCircle, Sun, Moon, Settings, Calendar, MoreVertical, ShieldAlert } from 'lucide-react';
 import { useTrips } from '../hooks/useTrips';
 import TripCard from './TripCard';
 import CalendarView from './CalendarView';
@@ -7,6 +7,7 @@ import { useStore } from '../store/useStore';
 import CreateTripModal from './CreateTripModal';
 import ProfileModal from './ProfileModal';
 import SettingsModal from './SettingsModal';
+import AdminPanel from './AdminPanel';
 import packageJson from '../../package.json';
 
 export default function Dashboard({ mustSetPassword, onOpenPasswordSetup }) {
@@ -68,6 +69,13 @@ export default function Dashboard({ mustSetPassword, onOpenPasswordSetup }) {
               className={`px-4 py-2 text-sm font-medium rounded-lg flex items-center transition-colors ${currentView === 'calendar' ? 'text-teal-700 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/30' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800'}`}>
               <Calendar size={16} className="mr-1.5" /> Kalendarz
             </button>
+            {user?.email === 'mariusz.gawron1@gmail.com' && (
+              <button
+                onClick={() => setCurrentView('admin')}
+                className={`px-4 py-2 text-sm font-medium rounded-lg flex items-center transition-colors ${currentView === 'admin' ? 'text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/30' : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800'}`}>
+                <ShieldAlert size={16} className="mr-1.5" /> Admin
+              </button>
+            )}
           </nav>
 
           <div className="flex items-center space-x-0.5 sm:space-x-2 order-2 lg:order-3">
@@ -125,19 +133,21 @@ export default function Dashboard({ mustSetPassword, onOpenPasswordSetup }) {
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight">Twoje Wyjazdy</h2>
-            <p className="text-zinc-500 dark:text-zinc-400 mt-2">Przeglądaj zaplanowane podróże.</p>
+        {currentView !== 'admin' && (
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight">Twoje Wyjazdy</h2>
+              <p className="text-zinc-500 dark:text-zinc-400 mt-2">Przeglądaj zaplanowane podróże.</p>
+            </div>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-white px-4 py-2 rounded-lg shadow-sm transition-colors"
+            >
+              <Plus size={20} className="mr-1.5" />
+              Nowy Wyjazd
+            </button>
           </div>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-white px-4 py-2 rounded-lg shadow-sm transition-colors"
-          >
-            <Plus size={20} className="mr-1.5" />
-            Nowy Wyjazd
-          </button>
-        </div>
+        )}
 
         {error && (
           <div className="p-4 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 rounded-xl mb-6 border border-rose-100 dark:border-rose-900/50">
@@ -145,7 +155,9 @@ export default function Dashboard({ mustSetPassword, onOpenPasswordSetup }) {
           </div>
         )}
 
-        {loading ? (
+        {currentView === 'admin' ? (
+          <AdminPanel />
+        ) : loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-zinc-400 dark:text-zinc-500">
             <Loader2 className="animate-spin mb-4" size={32} />
             <p>Ładowanie wyjazdów...</p>

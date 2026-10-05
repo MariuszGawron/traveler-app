@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Map, Car, Hotel, MapPin, Loader2, Trash, FileText, Users, Plus, Save, UserPlus, User, Edit2, ArrowLeft } from 'lucide-react';
+import { X, Map, Car, Hotel, MapPin, Loader2, Trash, FileText, Users, Plus, Save, UserPlus, User, Edit2, ArrowLeft, ShieldAlert } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { supabase } from '../lib/supabaseClient';
 import { useAccess, obfuscateEmail } from '../hooks/useAccess';
